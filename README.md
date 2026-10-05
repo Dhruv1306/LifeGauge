@@ -66,6 +66,32 @@ Every tool and package in LifeGauge was chosen with a specific purpose. Here is 
 
 ---
 
+### Frontend Production Dependencies (`frontend/package.json`)
+
+* **`react` & `react-dom` (The Lego Bricks & Master Builder)**:
+  * *What they do*: React lets us build our user interface out of interactive, reusable Lego blocks (called "components") like cards, score gauges, and buttons. When a score changes, React updates only that specific number on the screen smoothly without reloading the entire page.
+* **`react-router-dom` (The GPS & Tour Guide)**:
+  * *What it does*: Handles page navigation inside our app (like jumping between the Cockpit, Tasks, Habits, and Time Blocks) instantly in the browser without making the browser reload or flicker.
+* **`recharts` (The Master Artist for Charts)**:
+  * *What it does*: Turns raw numbers and dates into beautiful SVG charts. We use it to draw the stock-style momentum trajectory line and area curves with smooth gradients and hover tooltips.
+* **`lucide-react` (The Icon Toolbox)**:
+  * *What it does*: A clean library of icons (like gauges, flames, clocks, checkboxes, and sliders) that make the cockpit look modern and intuitive.
+* **`axios` (The Reliable Courier)**:
+  * *What it does*: Sends HTTP messages between our React frontend and Express backend. We configured it with an automatic badge pass: every time it sends a request, it automatically attaches your Bearer token so the backend knows it's you!
+* **`clsx` & `tailwind-merge` (The Class Harmonizers)**:
+  * *What they do*: Helper utilities that let us combine and toggle Tailwind CSS styles conditionally (for example, turning a cell green if a habit is done or orange if missed) without messy class conflicts.
+
+---
+
+### Frontend Developer & Build Tools (`devDependencies`)
+
+* **`vite` & `@vitejs/plugin-react` (The Supersonic Rocket Launcher)**:
+  * *What they do*: The modern build tool that bundles and runs our React application with near-instant hot-reloading while we develop and minifies code into ultra-fast static assets for deployment to Vercel.
+* **`tailwindcss`, `postcss`, `autoprefixer` (The Instant Stylist & Wardrobe)**:
+  * *What they do*: A modern utility CSS framework. Instead of writing separate CSS files with hundreds of lines, Tailwind lets us style buttons, cards, and grids directly using clean utility names (like `bg-slate-900`, `text-emerald-400`, `rounded-2xl`).
+
+---
+
 ## Quick Start (Development)
 
 ### Prerequisites

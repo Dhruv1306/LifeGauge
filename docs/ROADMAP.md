@@ -12,11 +12,11 @@
 
 * [X] **Milestone 1**: Database Schema, Non-Destructive Migrations, and Form-Based Bearer Auth with Tenant Isolation.
 * [X] **Milestone 2**: Core Data Modules (Tasks CRUD with Priorities, Habit Definitions & Punchcard Matrix, Google Calendar style Time Entries).
-* [ ] **Milestone 3**: Deterministic Analytics Engine, Dynamic Weight Normalization, Rest Day vs. Zero Output logic, Vitest Suite.
+* [X] **Milestone 3**: Deterministic Analytics Engine, Dynamic Weight Normalization, Rest Day vs. Zero Output logic, Vitest Suite.
 
 ## Phase 2: User Interface & Visualizations
 
-* [ ] **Milestone 4**: React 18 + Vite + Tailwind Dashboard, LeetCode/GitHub Habit Matrix, Recharts Stock Momentum Trajectory, Route Guards.
+* [X] **Milestone 4**: React 18 + Vite + Tailwind Dashboard, LeetCode/GitHub Habit Matrix, Recharts Stock Momentum Trajectory, Route Guards.
 * [ ] **Milestone 5**: Background Scheduler (node-cron + CRON_SECRET webhooks), Mock AI Provider, Weekly Review & Spotify-style Monthly Rewind UI.
 * [ ] **Milestone 6**: End-to-End Validation, Security Auditing, Deployment to Vercel (Frontend) and Render (Backend).
 

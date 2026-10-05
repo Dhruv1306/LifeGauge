@@ -4,6 +4,7 @@ import userRoutes from "./userRoutes";
 import taskRoutes from "./taskRoutes";
 import habitRoutes from "./habitRoutes";
 import timeEntryRoutes from "./timeEntryRoutes";
+import analyticsRoutes from "./analyticsRoutes";
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use("/user", userRoutes);
 router.use("/tasks", taskRoutes);
 router.use("/habits", habitRoutes);
 router.use("/time-entries", timeEntryRoutes);
+router.use("/analytics", analyticsRoutes);
 
 export default router;
