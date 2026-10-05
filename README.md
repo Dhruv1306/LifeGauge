@@ -25,6 +25,47 @@ LifeGauge brings tasks, priorities, deadlines, focus/time sessions, and selected
 
 ---
 
+## 📦 Why Does Each Dependency Exist? (Plain English Guide)
+
+Every tool and package in LifeGauge was chosen with a specific purpose. Here is what each one does and why it's here, explained simply:
+
+### Backend Production Dependencies (`backend/package.json`)
+
+* **`express` (The Post Office & Traffic Director)**:
+  * *What it does*: It is the web framework that runs our backend server. Whenever your browser wants to save a task, log in, or load habits, it sends a request over the internet. Express receives that request, directs it to the right piece of code, and sends back the answer as JSON.
+* **`@prisma/client` (The Database Bridge)**:
+  * *What it does*: Lets our Node.js code talk directly to our MySQL database. Instead of writing messy, error-prone SQL code strings by hand, Prisma gives us clean, auto-completed JavaScript functions (like `prisma.task.create(...)`) with full type safety.
+* **`bcryptjs` (The Password Scrambler)**:
+  * *What it does*: Keeps user passwords safe. We never store plain text passwords in the database (because if someone peeked at the database, they could steal accounts). `bcryptjs` turns `"mySecretPassword123"` into a super-secure scrambled code (hash) that cannot be reverse-engineered.
+* **`jsonwebtoken` / JWT (The Digital VIP Wristband)**:
+  * *What it does*: When you log in with your email and password, the server gives you a signed digital wristband called a "JWT token". On every future request, your browser simply shows this token so the server knows who you are without asking you to re-type your password on every single click.
+* **`zod` (The Security Bouncer & Form Inspector)**:
+  * *What it does*: Checks incoming data before it touches our database. If someone tries to register with an invalid email or a password that is too short, Zod catches it instantly and politely tells them what needs fixing.
+* **`cors` (The Friendly Neighbor Pass)**:
+  * *What it does*: Stands for "Cross-Origin Resource Sharing". When our frontend (hosted on Vercel or running on port 5173) asks our backend (hosted on Render or port 5000) for data, web browsers block it by default for safety. `cors` tells the browser: *"It's okay! This frontend is our friend, let them talk to us."*
+* **`dotenv` (The Secret Safe)**:
+  * *What it does*: Keeps sensitive settings (like database passwords and secret tokens) inside a private `.env` file that is never shared publicly on GitHub. `dotenv` reads that file and makes those secrets available inside our code.
+* **`node-cron` (The Automatic Alarm Clock)**:
+  * *What it does*: A background timer that triggers code at scheduled times. We use it to automatically generate your Weekly Review every Monday and your Monthly Rewind on the 28th of every month, even if you don't open the app.
+
+---
+
+### Backend Developer & Build Tools (`devDependencies`)
+
+* **`ts-node-dev` (The Instant Live Restarter)**:
+  * *What it does*: Runs our TypeScript backend during development. The `--respawn` flag automatically restarts the server the exact second you edit and save a file.
+  * *Why we do NOT need Nodemon*: `ts-node-dev` already does the job of Nodemon, but with built-in TypeScript speed. Installing both Nodemon and `ts-node-dev` would be completely redundant and waste computer memory.
+* **`typescript` (The Error Prevention Shield)**:
+  * *What it does*: Adds clear types (strings, numbers, dates) to JavaScript. It catches typos, missing properties, and bugs while you are typing before the code ever runs.
+* **`prisma` (The Database Blueprint Architect)**:
+  * *What it does*: The command-line tool that reads our `schema.prisma` file and creates the exact tables, columns, and foreign keys in MySQL.
+* **`vitest` (The Automated Quality Inspector)**:
+  * *What it does*: A lightning-fast testing tool. It automatically runs our test files (like checking that password hashing and token generation work 100% reliably) so we know nothing is broken.
+* **`@types/express`, `@types/bcryptjs`, `@types/cors`, `@types/jsonwebtoken`, `@types/node`, `@types/node-cron` (The TypeScript Dictionaries)**:
+  * *What they do*: These packages tell TypeScript what functions and types exist inside external JavaScript libraries so you get helpful autocomplete suggestions in your editor without any guesswork.
+
+---
+
 ## Quick Start (Development)
 
 ### Prerequisites
@@ -41,12 +82,12 @@ cd LifeGauge
 npm install
 
 # Setup environment variables
-cp backend/.env.example backend/.env
+Copy-Item backend\.env.example backend\.env
 
 # Run database migrations
-npm run db:migrate --workspace=backend
+npm run prisma:migrate --workspace=backend
 
-# Start backend & frontend concurrently
+# Start backend development server
 npm run dev
 ```
 
