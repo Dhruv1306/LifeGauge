@@ -13,7 +13,10 @@ export function requireAuth(
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     res.status(401).json({
       success: false,
-      error: "Authentication token required. Please log in.",
+      error: {
+        code: "AUTH_TOKEN_REQUIRED",
+        message: "Authentication token required. Please log in.",
+      },
     });
     return;
   }
@@ -30,7 +33,10 @@ export function requireAuth(
   } catch (error) {
     res.status(401).json({
       success: false,
-      error: "Invalid or expired session token. Please log in again.",
+      error: {
+        code: "AUTH_TOKEN_INVALID",
+        message: "Invalid or expired session token. Please log in again.",
+      },
     });
   }
 }
@@ -45,7 +51,10 @@ export function requireCronSecret(
   if (!secretHeader || secretHeader !== config.cronSecret) {
     res.status(403).json({
       success: false,
-      error: "Unauthorized: Invalid or missing cron secret.",
+      error: {
+        code: "AUTH_CRON_SECRET_INVALID",
+        message: "Unauthorized: Invalid or missing cron secret.",
+      },
     });
     return;
   }

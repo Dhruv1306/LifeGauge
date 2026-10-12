@@ -1,3 +1,4 @@
+
 # LifeGauge ⏱️📊
 
 > **An AI-Assisted Personal Productivity and Life Analytics Platform**
@@ -95,10 +96,12 @@ Every tool and package in LifeGauge was chosen with a specific purpose. Here is 
 ## Quick Start (Development)
 
 ### Prerequisites
+
 * Node.js (v20+ LTS recommended)
 * MySQL database (local or hosted e.g. Aiven)
 
 ### Installation
+
 ```bash
 # Clone the repository
 git clone https://github.com/your-username/LifeGauge.git
@@ -120,4 +123,5 @@ npm run dev
 ---
 
 ## License
+
 MIT

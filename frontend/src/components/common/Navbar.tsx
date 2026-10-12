@@ -18,7 +18,7 @@ export const Navbar: React.FC = () => {
   const [isWeightsOpen, setIsWeightsOpen] = useState(false);
 
   const navLinks = [
-    { name: "Cockpit", path: "/", icon: Gauge },
+    { name: "Cockpit", path: "/dashboard", icon: Gauge },
     { name: "Tasks", path: "/tasks", icon: CheckSquare },
     { name: "Habits", path: "/habits", icon: Flame },
     { name: "Time Blocks", path: "/time", icon: Clock },
@@ -29,7 +29,7 @@ export const Navbar: React.FC = () => {
       <nav className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
           {/* Brand Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group">
+          <Link to="/dashboard" className="flex items-center gap-2.5 group">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
               <Gauge className="h-5 w-5 text-slate-950" />
             </div>

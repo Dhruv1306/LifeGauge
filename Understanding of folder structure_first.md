@@ -1,301 +1,261 @@
 # Understanding of LifeGauge Folder Structure
 
-This document describes the state of LifeGauge as it exists in the repository on 2026-10-05 at 11:40 am.
+This document describes the repository as it exists on 2026-10-05.
 
-## 1. Current Milestone
+## Current Status
 
-LifeGauge is currently a backend foundation and architecture phase project. The repository is a Node.js monorepo, but only the backend and documentation workspaces exist in the current tree.
+LifeGauge is now a two-workspace monorepo with a working backend API and a working React frontend foundation.
 
-Implemented in the current code:
+Implemented in source code:
 
-- Root npm workspace configuration.
-- Express and TypeScript backend API.
-- Prisma schema for MySQL.
-- User, task, habit, habit-log, time-entry, weekly-review, and monthly-rewind data models.
-- Registration and login using email/password authentication.
-- bcrypt password hashing.
-- JWT Bearer-token authentication middleware.
-- Protected profile and productivity-weight endpoints.
-- CORS, JSON parsing, centralized error handling, and a health endpoint.
-- Unit tests for bcrypt, JWT, authentication middleware, and cron-secret middleware.
-- Architecture, product specification, metric formulas, AI guardrails, and roadmap documentation.
+- React/Vite frontend with login/register, protected routing, dashboard, tasks, habits, and time pages.
+- Express/TypeScript backend with authentication, task CRUD, habit tracking, time-entry tracking, and analytics endpoints.
+- Prisma/MySQL schema for users, tasks, habits, habit logs, time entries, weekly reviews, and monthly rewinds.
+- bcrypt password hashing and JWT Bearer authentication.
+- User-scoped database queries for tenant isolation.
+- Deterministic daily metrics, dynamic weight normalization, rest-day handling, and momentum analytics.
+- Vitest security tests.
+- Compiled backend JavaScript in `backend/dist` and a Vite production bundle in `frontend/dist`.
 
-Not implemented yet in source code:
+Not yet implemented in source code:
 
-- The `frontend/` directory and React dashboard.
-- Task, habit, habit-log, and time-entry CRUD routes/controllers.
-- The deterministic analytics engine.
-- Weekly/monthly review generation and persistence services.
-- Scheduler routes under `/api/jobs` and the `node-cron` integration.
+- Weekly/monthly AI review generation and persistence services.
+- Background job routes and active `node-cron` scheduling.
 - Production deployment configuration.
+- A GitHub remote connection.
 
-The roadmap still shows Milestone 1 as unchecked, although the current commit and source code contain most of the Milestone 1 foundation. That checklist should be updated when the milestone is formally accepted.
-
-## 2. Top-Level Structure
+## Complete Folder Tree
 
 ```text
 LifeGauge/
-|-- .git/                         Local Git repository data
-|-- .gitignore                    Files excluded from Git
-|-- package.json                  Root workspace scripts
-|-- package-lock.json             Locked npm dependency tree
-|-- node_modules/                 Installed root/workspace packages
-|-- README.md                     Short project overview and quick start
-|-- Understanding of folder structure.md
-|                                 This detailed guide
-|-- backend/                      Current executable API workspace
-|   |-- package.json
-|   |-- tsconfig.json
-|   |-- .env.example
+|-- .git/                              Local Git history and branch data
+|-- .gitignore                         Ignored secrets, dependencies, and build output
+|-- package.json                       Root npm workspace scripts
+|-- package-lock.json                  Locked dependency versions
+|-- README.md                          High-level project overview
+|-- Understanding of folder structure_first.md
+|                                      This guide
+|-- docs/                              Product and architecture documentation
+|   |-- AI_INSIGHTS.md
+|   |-- ARCHITECTURE.md
+|   |-- METRICS.md
+|   |-- PROJECT_SPEC.md
+|   `-- ROADMAP.md
+|-- backend/                           Express API workspace
+|   |-- .env                           Local environment values, ignored by Git
+|   |-- .env.example                    Shareable environment template
+|   |-- package.json                    Backend scripts and dependencies
+|   |-- tsconfig.json                   TypeScript compiler configuration
 |   |-- prisma/
+|   |   `-- schema.prisma               MySQL data model and relations
+|   |-- src/                            Editable TypeScript source
+|   |   |-- index.ts                    Express app bootstrap and server startup
+|   |   |-- config/index.ts             Environment-backed configuration
+|   |   |-- controllers/                Request validation and business operations
+|   |   |   |-- authController.ts
+|   |   |   |-- analyticsController.ts
+|   |   |   |-- habitController.ts
+|   |   |   |-- taskController.ts
+|   |   |   `-- timeEntryController.ts
+|   |   |-- lib/prisma.ts               Shared Prisma client
+|   |   |-- middleware/
+|   |   |   |-- auth.ts                  JWT and cron-secret guards
+|   |   |   `-- errorHandler.ts          Global error response formatter
+|   |   |-- routes/                     URL-to-controller mapping
+|   |   |   |-- index.ts
+|   |   |   |-- analyticsRoutes.ts
+|   |   |   |-- authRoutes.ts
+|   |   |   |-- habitRoutes.ts
+|   |   |   |-- taskRoutes.ts
+|   |   |   |-- timeEntryRoutes.ts
+|   |   |   `-- userRoutes.ts
+|   |   |-- services/analytics/
+|   |   |   `-- analyticsService.ts     Pure scoring and momentum calculations
+|   |   `-- types/index.ts               Shared Express/JWT TypeScript types
+|   |-- dist/                           Generated JavaScript output; do not edit manually
+|   |   |-- index.js                    Compiled equivalent of src/index.ts
+|   |   |-- config/, controllers/, lib/, middleware/, routes/, services/, types/
+|   |   `-- ...                          Compiled .js files matching src modules
+|   |-- tests/auth.test.ts               Vitest security tests
+|   `-- node_modules/                   Installed backend/workspace packages
+|-- frontend/                           React/Vite workspace
+|   |-- index.html                      Browser HTML entry point
+|   |-- package.json                    Frontend scripts and dependencies
+|   |-- vite.config.ts                  Port 5173 and /api proxy to port 5000
+|   |-- tsconfig*.json                  Frontend TypeScript configuration
+|   |-- tailwind.config.js              Tailwind configuration
+|   |-- postcss.config.js               CSS processing configuration
 |   |-- src/
-|   `-- tests/
-`-- docs/                         Product and architecture source material
+|   |   |-- main.tsx                    React entry point
+|   |   |-- App.tsx                     Browser routes and protected pages
+|   |   |-- index.css                   Global styling
+|   |   |-- api/client.ts                Axios client and JWT interceptor
+|   |   |-- context/AuthContext.tsx      Login state and session restoration
+|   |   |-- utils/authStorage.ts         localStorage token/user storage
+|   |   |-- pages/                      Login, dashboard, tasks, habits, and time screens
+|   |   |-- components/common/           Navbar, route guard, settings modal
+|   |   |-- components/tasks/            Task list and create modal
+|   |   |-- components/habits/           Habit create modal
+|   |   |-- components/dashboard/        Time logger and score gauges
+|   |   `-- components/charts/           Habit matrix, momentum, and time distribution
+|   `-- dist/                           Generated Vite production assets
+`-- node_modules/                       Root workspace dependency installation
 ```
 
-There is currently no `frontend/` directory, even though the root workspace configuration and documentation already reserve a workspace for it. Consequently, frontend scripts cannot work until that workspace is created.
+## `src` Versus `dist`
 
-## 3. Root Files
+`backend/src` contains the source developers edit. It is written in TypeScript (`.ts`).
 
-### `package.json`
+`backend/dist` contains the JavaScript produced by the TypeScript compiler. It is created by:
 
-Defines the private `lifegauge-monorepo` and declares `backend` and `frontend` as npm workspaces. It forwards common commands to workspaces:
+```powershell
+npm.cmd run build:backend
+```
 
-- `npm run dev`: starts the backend development server.
-- `npm run dev:backend`: explicitly starts the backend.
-- `npm run dev:frontend`: expects a future frontend workspace.
-- `npm run build:backend`: compiles the backend.
-- `npm run build:frontend`: expects a future frontend workspace.
-- `npm run build`: builds backend and frontend in sequence.
-- `npm run test:backend`: runs backend tests.
-- `npm test`: currently aliases the backend tests.
-
-### `package-lock.json`
-
-Locks the exact dependency versions installed by npm. It makes local, CI, and deployment installs more reproducible.
-
-### `.gitignore`
-
-Prevents dependencies, environment secrets, build output, local database files, editor files, and logs from being committed. In particular, `.env` is ignored while `.env.example` remains shareable.
-
-### `README.md`
-
-Provides the high-level product description, intended technology stack, and quick-start outline. Its migration example should use `npm run prisma:migrate --workspace=backend`; there is no `db:migrate` script in the current package files.
-
-## 4. Backend Workspace
-
-### `backend/package.json`
-
-Defines the backend runtime and scripts:
-
-- `dev`: runs `src/index.ts` through `ts-node-dev --respawn --transpile-only`.
-- `build`: compiles TypeScript into `backend/dist`.
-- `start`: runs the compiled `dist/index.js`.
-- `test`: runs Vitest once.
-- `prisma:generate`: generates the Prisma client.
-- `prisma:migrate`: creates/applies a development migration.
-- `prisma:deploy`: applies existing migrations in deployment environments.
-
-Important dependency groups are Express/CORS for HTTP, Prisma for data access, bcryptjs for password hashing, jsonwebtoken for sessions, Zod for validation, dotenv for environment configuration, and Vitest for tests.
-
-### `backend/tsconfig.json`
-
-Compiles strict TypeScript targeting ES2022/CommonJS. Source comes from `backend/src`, compiled output goes to `backend/dist`, and tests are excluded from the production compilation.
-
-### `backend/.env.example`
-
-Documents the required environment values:
-
-- `PORT`: API port, default `5000`.
-- `NODE_ENV`: runtime mode.
-- `JWT_SECRET`: signing secret for login tokens.
-- `CRON_SECRET`: secret for future scheduled-job webhooks.
-- `DATABASE_URL`: MySQL connection string.
-- `CORS_ORIGIN`: expected browser origin, normally `http://localhost:5173`.
-
-Copy this file to `backend/.env` and replace development/default secrets before using a shared or production database. The real `.env` is intentionally ignored by Git.
-
-## 5. Backend Source Files
-
-### `backend/src/index.ts`
-
-Creates the Express application. It configures CORS, JSON request parsing, mounts all routes under `/api`, installs the global error handler, and starts listening on the configured port unless `NODE_ENV=test`. It exports the app so tests can import it without starting a server.
-
-Connection flow:
+For example:
 
 ```text
-Client -> src/index.ts -> /api routes -> controller -> Prisma -> MySQL
-                                      |
-                                      `-> errorHandler for uncaught errors
+backend/src/routes/taskRoutes.ts  ->  backend/dist/routes/taskRoutes.js
+backend/src/index.ts               ->  backend/dist/index.js
+backend/src/services/analytics/analyticsService.ts
+                                   -> backend/dist/services/analytics/analyticsService.js
 ```
 
-### `backend/src/config/index.ts`
+They are not different features. They are two representations of the same backend: TypeScript source for development and JavaScript output for running the compiled production-style server. Do not edit `dist`; change `src`, then build again. `backend/package.json` runs `dist/index.js` only for the `start` script.
 
-Loads `.env` through dotenv and exposes typed application configuration such as the port, JWT secret, CORS origin, cron secret, and database URL. Other backend files import `config` instead of reading environment variables repeatedly.
+The same idea applies to `frontend/src` and `frontend/dist`: Vite turns the React/TypeScript source into browser assets for preview or deployment.
 
-### `backend/src/routes/index.ts`
-
-The top-level API router. It defines `GET /api/health` and mounts the authentication router at `/api/auth`.
-
-### `backend/src/routes/authRoutes.ts`
-
-Maps HTTP endpoints to authentication controllers:
-
-- `POST /api/auth/register` -> create an account.
-- `POST /api/auth/login` -> verify credentials and issue a JWT.
-- `GET /api/auth/me` -> return the authenticated user.
-- `PUT /api/auth/weights` -> update the user's metric weights and focus target.
-
-The last two routes pass through `requireAuth` first.
-
-### `backend/src/controllers/authController.ts`
-
-Contains the authentication business logic. Zod validates request bodies, Prisma reads/writes users, bcrypt hashes or verifies passwords, and JWT signs seven-day Bearer tokens. New users receive default weights of 40% tasks, 35% focus, 25% habits, and a 120-minute daily focus target.
-
-### `backend/src/middleware/auth.ts`
-
-Provides reusable request guards:
-
-- `requireAuth` reads `Authorization: Bearer <token>`, verifies the JWT, and attaches `id` and `email` to `req.user`.
-- `requireCronSecret` checks `X-Cron-Secret` for future scheduled-job endpoints.
-
-### `backend/src/middleware/errorHandler.ts`
-
-Acts as the final Express error boundary. It formats Zod validation errors as HTTP 400 responses and returns HTTP 500 for unexpected errors.
-
-### `backend/src/lib/prisma.ts`
-
-Creates and exports one Prisma client. In non-production development it stores the client on `globalThis` to avoid creating extra database connections during reloads.
-
-### `backend/src/types/index.ts`
-
-Defines the TypeScript contracts shared by middleware and controllers. `AuthUserPayload` describes the JWT identity, and `AuthenticatedRequest` extends Express's request with an optional `user` property.
-
-## 6. Database Layer
-
-### `backend/prisma/schema.prisma`
-
-Declares MySQL as the database provider and generates the Prisma client. The relationships are user-centered:
+## How the Application Connects
 
 ```text
-User
-|-- Tasks -------------------- optional TimeEntries
-|-- Habits ------------------- HabitLogs
-|-- TimeEntries
-|-- WeeklyReviews
-`-- MonthlyRewinds
+Browser :5173
+  |-- React route /login, /, /tasks, /habits, /time
+  |-- Axios client adds Authorization: Bearer <JWT>
+  `-- Vite proxies /api/*
+          |
+          v
+Express API :5000
+  |-- /api/health
+  |-- /api/auth/* and /api/user/*
+  |-- /api/tasks/*, /api/habits/*, /api/time-entries/*
+  `-- /api/analytics/*
+          |
+          v
+JWT middleware -> controller -> Prisma client -> MySQL
+                              |
+                              `-> analyticsService for deterministic scores
 ```
 
-Every user-owned record carries a relationship back to `User`, with cascade deletion where appropriate. This is the foundation for tenant isolation: future queries must always scope records by the authenticated `userId`.
+The frontend stores the JWT in local storage. The Axios interceptor sends it with each API request. Protected backend routes verify it and use the embedded user ID to restrict database reads and writes to that user.
 
-The schema already models the planned product even though most corresponding API modules are not implemented yet. `Priority` supports LOW, MEDIUM, and HIGH task values. Unique constraints prevent duplicate habit logs for one habit/date and duplicate weekly or monthly reviews for one user and period.
+## Currently Implemented API Endpoints
 
-No Prisma migration directory is currently visible in the project tree, so a database migration must be created/applied before the API can persist users against a fresh MySQL database.
+The backend base URL is `http://localhost:5000`. There are 26 route declarations.
 
-## 7. Tests
+### Health
 
-### `backend/tests/auth.test.ts`
+- `GET /api/health` - public server health check.
 
-Contains unit tests for Milestone 1 security behavior: bcrypt hashing, JWT signing/verification and tamper rejection, missing/invalid/valid Bearer tokens, and missing/wrong/valid cron secrets. These tests exercise middleware and libraries without testing the full database-backed registration flow.
+### Authentication
 
-## 8. Documentation Folder
+- `POST /api/auth/register` - create a user and return a JWT.
+- `POST /api/auth/login` - validate credentials and return a JWT.
+- `GET /api/auth/me` - return the authenticated user; requires Bearer JWT.
+- `PUT /api/auth/weights` - update score weights; requires Bearer JWT.
 
-- `docs/PROJECT_SPEC.md`: product goals, modules, scoring rules, and intended technology stack.
-- `docs/ARCHITECTURE.md`: three-tier deployment architecture and three conceptual layers: raw records, deterministic analytics, and AI interpretation.
-- `docs/METRICS.md`: formulas for task, focus, habit, weighted score, rest-day handling, and momentum.
-- `docs/AI_INSIGHTS.md`: factsheet input, Zod output shape, hallucination guardrails, and the planned offline mock AI provider.
-- `docs/ROADMAP.md`: phase and milestone checklist. It currently describes the target roadmap rather than a complete implementation inventory.
+### User
 
-These documents describe planned behavior and should not be treated as proof that every described module already exists in `backend/src`.
+- `GET /api/user/profile` - same profile operation as `/api/auth/me`; requires Bearer JWT.
+- `PUT /api/user/weights` - same weight operation as `/api/auth/weights`; requires Bearer JWT.
 
-## 9. How the Pieces Connect
+### Tasks
 
-1. A client sends an HTTP request to the Express app in `src/index.ts`.
-2. `/api` forwards the request to the router in `src/routes/index.ts`.
-3. Authentication requests continue through `authRoutes.ts` to a controller.
-4. Protected requests first pass through `requireAuth`, which obtains the user identity from the JWT.
-5. The controller validates input with Zod and uses the shared Prisma client to access MySQL.
-6. The response returns JSON to the client; unexpected errors pass to `errorHandler`.
-7. The future frontend will call this API and display tasks, habits, time entries, deterministic metrics, and AI retrospectives.
+- `GET /api/tasks` - list the authenticated user's tasks; supports `status`, `priority`, `dueDate`, and `search` query parameters.
+- `POST /api/tasks` - create a task.
+- `GET /api/tasks/:id` - retrieve one task.
+- `PATCH /api/tasks/:id` - update task fields or completion state.
+- `DELETE /api/tasks/:id` - delete a task.
 
-## 10. How to Run It
+### Habits
 
-### Prerequisites
+- `GET /api/habits` - list active habits.
+- `POST /api/habits` - create a habit.
+- `GET /api/habits/matrix` - return the habit punchcard matrix; supports `startDate` and `endDate`.
+- `PATCH /api/habits/:id` - update a habit.
+- `DELETE /api/habits/:id` - delete a habit and its logs.
+- `POST /api/habits/:id/toggle` - toggle a habit log for a `YYYY-MM-DD` date.
 
-- Node.js 20 or newer.
-- npm.
-- A running MySQL database and a valid connection string.
+### Time Entries
 
-### First-time setup in PowerShell
+- `GET /api/time-entries` - list time entries; supports date, category, and task filters.
+- `POST /api/time-entries` - record a focus/time block.
+- `GET /api/time-entries/summary` - return category totals and percentages.
+- `PATCH /api/time-entries/:id` - update a time entry.
+- `DELETE /api/time-entries/:id` - delete a time entry.
+
+### Analytics
+
+- `GET /api/analytics/daily` - calculate one day's scores and day-over-day delta; optional `date` query parameter.
+- `GET /api/analytics/momentum` - return a score time series; optional `days` query parameter from 7 to 90.
+- `GET /api/analytics/comparison` - compare periods; optional `period=day|week|month`.
+
+All endpoints except health, registration, and login require `Authorization: Bearer <JWT>`. GET health can be typed directly into a browser. POST, PUT, PATCH, DELETE, and protected GET endpoints are normally exercised through the frontend, Postman, curl, or PowerShell because a browser address bar cannot add JSON bodies or Authorization headers.
+
+## How to Run the Current Project
+
+Use `npm.cmd` in PowerShell if the `npm.ps1` execution-policy error still occurs.
+
+### Development mode
+
+Open two terminals from the repository root:
 
 ```powershell
-cd C:\Users\dhruv\OneDrive\Desktop\LifeGauge
-npm install
-Copy-Item backend\.env.example backend\.env
-# Edit backend\.env and set DATABASE_URL and strong secrets.
-npm run prisma:generate --workspace=backend
-npm run prisma:migrate --workspace=backend
+cd path\to\LifeGauge
+npm.cmd run dev:backend
 ```
-
-The migration command may ask for a migration name. Use a name such as `initial_schema`.
-
-### Start development mode
 
 ```powershell
-npm run dev
+cd path\to\LifeGauge
+npm.cmd run dev:frontend
 ```
 
-The API should be available at `http://localhost:5000`. A quick check is:
-
-```powershell
-Invoke-RestMethod http://localhost:5000/api/health
-```
-
-### Build and run compiled backend
-
-```powershell
-npm run build:backend
-npm run start --workspace=backend
-```
-
-### Run tests
-
-```powershell
-npm run test:backend
-```
-
-### Current frontend limitation
-
-`npm run dev:frontend` and the combined frontend build do not work yet because `frontend/` is not present. The current root `npm run dev` starts only the backend.
-
-## 11. Nodemon and Automatic Updates
-
-Nodemon is not installed and there is no nodemon configuration. The backend uses `ts-node-dev` instead:
+Then open:
 
 ```text
-ts-node-dev --respawn --transpile-only src/index.ts
+http://localhost:5173
 ```
 
-`--respawn` restarts the backend process when TypeScript files change. This is automatic server restart, not browser hot reload. Browser updates will require a frontend dev server such as Vite once the `frontend/` workspace is created. For the current backend-only project, use an API client, curl, or Postman to check responses.
+The frontend Vite server proxies API calls to `http://localhost:5000`. `npm.cmd run dev` currently starts only the backend because the root script points to the backend workspace. It does not start both servers concurrently.
 
-## 12. Git and GitHub Status
+### Build mode
 
-The project is initialized as a local Git repository: `.git/` exists, the current branch is `master`, and the current commit is:
-
-```text
-f2f2285 feat(backend): complete Milestone 1 with Prisma schema, auth, security middlewares, and tests
-```
-
-The working tree currently has a modification to `docs/ROADMAP.md`. No output was returned by `git remote -v`, so this checkout does not currently have a remote GitHub repository configured. Git initialization and GitHub connection are separate steps:
+`build` checks/compiles the workspaces; it is not the normal development command:
 
 ```powershell
-git remote add origin https://github.com/<your-username>/<your-repository>.git
-git push -u origin master
+npm.cmd run build
 ```
 
-Only run those commands with the real repository URL. Afterward, verify the connection with:
+To run the compiled backend after building:
 
 ```powershell
-git remote -v
-git branch -vv
+npm.cmd run start --workspace=backend
 ```
+
+To preview the compiled frontend:
+
+```powershell
+npm.cmd run preview --workspace=frontend
+```
+
+## Current Runtime Check
+
+With both development servers running:
+
+- Frontend: `http://localhost:5173`
+- Backend health: `http://localhost:5000/api/health`
+
+The frontend login/register screen calls the auth API. After login, the dashboard calls daily analytics and task endpoints, the habit matrix calls habit endpoints, and the time distribution calls time-entry endpoints. Database-backed endpoints need a reachable MySQL database and a valid `backend/.env` `DATABASE_URL`.
+
+## Git Status Note
+
+The project has local Git commits, but a GitHub remote must still be configured separately. Use `git remote -v` to check it. This documentation does not assume that a remote exists.

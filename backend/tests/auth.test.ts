@@ -54,12 +54,13 @@ describe("Milestone 1: Authentication & Security Unit Tests", () => {
       requireAuth(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          success: false,
-          error: expect.stringContaining("Authentication token required"),
-        })
-      );
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: {
+          code: "AUTH_TOKEN_REQUIRED",
+          message: "Authentication token required. Please log in.",
+        },
+      });
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -92,12 +93,13 @@ describe("Milestone 1: Authentication & Security Unit Tests", () => {
       requireAuth(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          success: false,
-          error: expect.stringContaining("Invalid or expired session token"),
-        })
-      );
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: {
+          code: "AUTH_TOKEN_INVALID",
+          message: "Invalid or expired session token. Please log in again.",
+        },
+      });
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -135,6 +137,13 @@ describe("Milestone 1: Authentication & Security Unit Tests", () => {
       requireCronSecret(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: {
+          code: "AUTH_CRON_SECRET_INVALID",
+          message: "Unauthorized: Invalid or missing cron secret.",
+        },
+      });
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -151,6 +160,13 @@ describe("Milestone 1: Authentication & Security Unit Tests", () => {
       requireCronSecret(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: {
+          code: "AUTH_CRON_SECRET_INVALID",
+          message: "Unauthorized: Invalid or missing cron secret.",
+        },
+      });
       expect(next).not.toHaveBeenCalled();
     });
 
