@@ -14,22 +14,25 @@ enum Priority {
 }
 
 model User {
-  id                  String          @id @default(uuid())
-  email               String          @unique
+  id                  String                @id @default(uuid())
+  email               String                @unique
   passwordHash        String
   name                String
-  weightTasks         Int             @default(40)
-  weightFocus         Int             @default(35)
-  weightHabits        Int             @default(25)
-  dailyFocusTargetMin Int             @default(120)
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
+  weightTasks         Int                   @default(40)
+  weightFocus         Int                   @default(35)
+  weightHabits        Int                   @default(25)
+  dailyFocusTargetMin Int                   @default(120)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
 
   tasks               Task[]
   habits              Habit[]
   timeEntries         TimeEntry[]
   weeklyReviews       WeeklyReview[]
   monthlyRewinds      MonthlyRewind[]
+  // Google Calendar — kept strictly separate from productivity analytics
+  googleCalendarToken GoogleCalendarToken?
+  calendarEvents      CalendarEvent[]
 
   @@map("users")
 }
@@ -136,4 +139,78 @@ model MonthlyRewind {
   @@unique([userId, year, month])
   @@index([userId])
   @@map("monthly_rewinds")
+}
+
+// ============================================================
+// Google Calendar Integration — STRICTLY ISOLATED
+// These models must never be read by or referenced from the
+// deterministic analytics engine or AI review services.
+// CalendarEvent and GoogleCalendarToken are NOT TimeEntry.
+// ============================================================
+
+/// Stores the encrypted OAuth tokens and incremental sync state for a connected Google account.
+/// One record per user. Deleted on disconnect (tokens revoked first).
+model GoogleCalendarToken {
+  id                    String    @id @default(uuid())
+  userId                String    @unique
+  /// AES-256-GCM encrypted refresh token (hex: iv:authTag:ciphertext)
+  encryptedRefreshToken String    @db.Text
+  /// Google account email shown in the UI status badge
+  googleEmail           String?
+  /// Google Calendar API nextSyncToken for incremental sync — null means a full sync is needed
+  syncToken             String?   @db.Text
+  /// Timestamp of last successful sync — used to skip redundant re-syncs
+  lastSyncedAt          DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("google_calendar_tokens")
+}
+
+/// Local cache of Google Calendar events. Kept completely separate from TimeEntry.
+/// IMPORTANT: These events must never contribute to productivity scores, analytics,
+/// Weekly Reviews, or Monthly Rewinds — this is enforced in the analytics service layer.
+model CalendarEvent {
+  id               String    @id @default(uuid())
+  userId           String
+  /// The event's unique ID in Google Calendar — used to deduplicate and sync
+  googleEventId    String
+  googleCalendarId String    @default("primary")
+  title            String
+  description      String?   @db.Text
+  location         String?
+  /// UTC start datetime — null for all-day events (use startDate instead)
+  startTime        DateTime?
+  /// UTC end datetime — null for all-day events (use endDate instead)
+  endTime          DateTime?
+  /// YYYY-MM-DD for all-day event start (inclusive)
+  startDate        String?
+  /// YYYY-MM-DD for all-day event end (exclusive, Google Calendar convention)
+  endDate          String?
+  isAllDay         Boolean   @default(false)
+  /// True if this is an instance of a recurring event series
+  isRecurring      Boolean   @default(false)
+  /// Google's recurringEventId for recurring instances (links to the series master)
+  recurringEventId String?
+  /// confirmed | tentative | cancelled. Cancelled events are soft-deleted from cache.
+  status           String    @default("confirmed")
+  /// IANA timezone string (e.g. "Asia/Kolkata")
+  timezone         String?
+  /// Google etag for optimistic concurrency / conflict detection
+  etag             String?
+  /// Last time this event was written by LifeGauge to Google (used for loop prevention)
+  writtenByUsAt    DateTime?
+  syncedAt         DateTime  @default(now())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, googleEventId])
+  @@index([userId])
+  @@index([userId, startTime])
+  @@index([userId, startDate])
+  @@map("calendar_events")
 }

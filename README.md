@@ -48,6 +48,8 @@ Every tool and package in LifeGauge was chosen with a specific purpose. Here is 
   * *What it does*: Keeps sensitive settings (like database passwords and secret tokens) inside a private `.env` file that is never shared publicly on GitHub. `dotenv` reads that file and makes those secrets available inside our code.
 * **`node-cron` (The Automatic Alarm Clock)**:
   * *What it does*: A background timer that triggers code at scheduled times. We use it to automatically generate your Weekly Review every Monday and your Monthly Rewind on the 28th of every month, even if you don't open the app.
+* **`googleapis` & `google-auth-library` (The Google Calendar Ambassadors)**:
+  * *What they do*: Official Google SDKs that allow our backend to securely talk to Google's servers. `google-auth-library` handles the OAuth 2.0 handshake (where Google asks if you grant LifeGauge permission to access your calendar), exchanges secret authorization codes for tokens, and automatically refreshes expired tokens. `googleapis` allows our app to fetch events, insert new events, update them, and delete them from your primary Google Calendar in real-time.
 
 ---
 
