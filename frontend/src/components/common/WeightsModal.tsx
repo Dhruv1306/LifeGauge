@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { X, Sliders, Check } from "lucide-react";
+import { X, Sliders, Check, AlertCircle } from "lucide-react";
 
 interface WeightsModalProps {
   isOpen: boolean;
@@ -9,20 +9,42 @@ interface WeightsModalProps {
 
 export const WeightsModal: React.FC<WeightsModalProps> = ({ isOpen, onClose }) => {
   const { user, updateWeights } = useAuth();
-  const [tasksWeight, setTasksWeight] = useState(user?.weightTasks || 40);
-  const [focusWeight, setFocusWeight] = useState(user?.weightFocus || 35);
-  const [habitsWeight, setHabitsWeight] = useState(user?.weightHabits || 25);
-  const [targetMin, setTargetMin] = useState(user?.dailyFocusTargetMin || 120);
+  const [tasksWeight, setTasksWeight] = useState(user?.weightTasks ?? 40);
+  const [focusWeight, setFocusWeight] = useState(user?.weightFocus ?? 35);
+  const [habitsWeight, setHabitsWeight] = useState(user?.weightHabits ?? 25);
+  const [targetMin, setTargetMin] = useState(user?.dailyFocusTargetMin ?? 120);
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const resetToBaseline = () => {
+    setTasksWeight(user?.weightTasks ?? 40);
+    setFocusWeight(user?.weightFocus ?? 35);
+    setHabitsWeight(user?.weightHabits ?? 25);
+    setTargetMin(user?.dailyFocusTargetMin ?? 120);
+    setErrorMsg(null);
+  };
+
+  // Synchronize draft values with user baseline whenever modal opens
+  useEffect(() => {
+    if (isOpen) {
+      resetToBaseline();
+    }
+  }, [isOpen, user]);
 
   if (!isOpen) return null;
 
   const totalWeights = tasksWeight + focusWeight + habitsWeight;
 
+  const handleCancel = () => {
+    resetToBaseline();
+    onClose();
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    setErrorMsg(null);
     try {
       await updateWeights({
         weightTasks: tasksWeight,
@@ -35,8 +57,14 @@ export const WeightsModal: React.FC<WeightsModalProps> = ({ isOpen, onClose }) =
         setSavedSuccess(false);
         onClose();
       }, 800);
-    } catch (err) {
-      console.error(err);
+    } catch (err: unknown) {
+      console.error("Failed to update weights:", err);
+      const msg =
+        err && typeof err === "object" && "response" in err
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ? (err as any).response?.data?.error?.message || (err as any).response?.data?.error
+          : "Failed to save settings. Please try again.";
+      setErrorMsg(msg || "Failed to save settings.");
     } finally {
       setIsSaving(false);
     }
@@ -51,7 +79,7 @@ export const WeightsModal: React.FC<WeightsModalProps> = ({ isOpen, onClose }) =
             <h3 className="text-lg font-semibold text-white">Productivity Weights & Target</h3>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleCancel}
             className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
           >
             <X className="h-5 w-5" />
@@ -59,6 +87,13 @@ export const WeightsModal: React.FC<WeightsModalProps> = ({ isOpen, onClose }) =
         </div>
 
         <form onSubmit={handleSave} className="mt-5 space-y-5">
+          {errorMsg && (
+            <div className="flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 p-2.5 text-xs text-rose-400">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
           <p className="text-xs text-slate-400">
             Customize how each pillar contributes to your personal daily productivity gauge. If a module has no activity scheduled on a day, its weight dynamically drops out!
           </p>
@@ -140,7 +175,7 @@ export const WeightsModal: React.FC<WeightsModalProps> = ({ isOpen, onClose }) =
           <div className="flex gap-3 pt-3">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleCancel}
               className="w-1/2 rounded-xl border border-slate-700 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800"
             >
               Cancel
