@@ -9,12 +9,20 @@ type DayCode = typeof DAY_CODES[number];
 const createHabitSchema = z.object({
   title: z.string().min(1, "Habit title is required").trim(),
   targetDays: z.string().default("ALL"), // e.g. "MON,TUE,WED,THU,FRI" or "ALL"
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date must be in YYYY-MM-DD format").optional().nullable(),
+  order: z.number().int().optional(),
 });
 
 const updateHabitSchema = z.object({
   title: z.string().min(1).trim().optional(),
   targetDays: z.string().optional(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date must be in YYYY-MM-DD format").optional().nullable(),
+  order: z.number().int().optional(),
   isActive: z.boolean().optional(),
+});
+
+const reorderHabitsSchema = z.object({
+  habitIds: z.array(z.string().min(1)).min(1, "At least one habit ID is required"),
 });
 
 const toggleHabitSchema = z.object({
@@ -61,7 +69,7 @@ export async function getHabits(req: AuthenticatedRequest, res: Response): Promi
 
   const habits = await prisma.habit.findMany({
     where: { userId, isActive: true },
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ order: "asc" }, { createdAt: "asc" }],
   });
 
   res.status(200).json({
@@ -87,13 +95,27 @@ export async function createHabit(req: AuthenticatedRequest, res: Response): Pro
     return;
   }
 
-  const { title, targetDays } = parsed.data;
+  const { title, targetDays, startDate, order } = parsed.data;
+
+  let assignedOrder = order;
+  if (assignedOrder === undefined) {
+    const maxOrderHabit = await prisma.habit.findFirst({
+      where: { userId },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    });
+    assignedOrder = (maxOrderHabit?.order ?? -1) + 1;
+  }
+
+  const assignedStartDate = startDate || new Date().toISOString().split("T")[0];
 
   const habit = await prisma.habit.create({
     data: {
       userId,
       title,
       targetDays: targetDays.toUpperCase(),
+      startDate: assignedStartDate,
+      order: assignedOrder,
     },
   });
 
@@ -131,13 +153,17 @@ export async function updateHabit(req: AuthenticatedRequest, res: Response): Pro
     return;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updateData: any = {};
+  if (parsed.data.title !== undefined) updateData.title = parsed.data.title;
+  if (parsed.data.targetDays !== undefined) updateData.targetDays = parsed.data.targetDays.toUpperCase();
+  if (parsed.data.startDate !== undefined) updateData.startDate = parsed.data.startDate;
+  if (parsed.data.order !== undefined) updateData.order = parsed.data.order;
+  if (parsed.data.isActive !== undefined) updateData.isActive = parsed.data.isActive;
+
   const updatedHabit = await prisma.habit.update({
     where: { id: habitId },
-    data: {
-      ...(parsed.data.title !== undefined ? { title: parsed.data.title } : {}),
-      ...(parsed.data.targetDays !== undefined ? { targetDays: parsed.data.targetDays.toUpperCase() } : {}),
-      ...(parsed.data.isActive !== undefined ? { isActive: parsed.data.isActive } : {}),
-    },
+    data: updateData,
   });
 
   res.status(200).json({
@@ -237,6 +263,57 @@ export async function toggleHabit(req: AuthenticatedRequest, res: Response): Pro
   });
 }
 
+export async function reorderHabits(req: AuthenticatedRequest, res: Response): Promise<void> {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ success: false, error: "Unauthorized" });
+    return;
+  }
+
+  const parsed = reorderHabitsSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({
+      success: false,
+      error: parsed.error.errors[0]?.message || "Validation failed",
+    });
+    return;
+  }
+
+  const { habitIds } = parsed.data;
+
+  // Verify all habit IDs belong to the current user
+  const userHabits = await prisma.habit.findMany({
+    where: {
+      id: { in: habitIds },
+      userId,
+    },
+    select: { id: true },
+  });
+
+  if (userHabits.length !== habitIds.length) {
+    res.status(400).json({
+      success: false,
+      error: "One or more habit IDs are invalid or do not belong to you.",
+    });
+    return;
+  }
+
+  // Update order within a transaction
+  await prisma.$transaction(
+    habitIds.map((id, index) =>
+      prisma.habit.update({
+        where: { id },
+        data: { order: index },
+      })
+    )
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Habits reordered successfully",
+  });
+}
+
 export async function getHabitMatrix(req: AuthenticatedRequest, res: Response): Promise<void> {
   const userId = req.user?.id;
   if (!userId) {
@@ -264,7 +341,7 @@ export async function getHabitMatrix(req: AuthenticatedRequest, res: Response): 
         },
       },
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ order: "asc" }, { createdAt: "asc" }],
   });
 
   let totalScheduled = 0;
@@ -276,7 +353,8 @@ export async function getHabitMatrix(req: AuthenticatedRequest, res: Response): 
 
     for (const date of dates) {
       const dayCode = getDayCode(date);
-      const scheduled = isHabitScheduledForDay(habit.targetDays, dayCode);
+      const isBeforeStart = habit.startDate ? date < habit.startDate : false;
+      const scheduled = !isBeforeStart && isHabitScheduledForDay(habit.targetDays, dayCode);
       const completed = !!logMap.get(date);
 
       if (scheduled) {
@@ -293,6 +371,8 @@ export async function getHabitMatrix(req: AuthenticatedRequest, res: Response): 
       id: habit.id,
       title: habit.title,
       targetDays: habit.targetDays,
+      startDate: habit.startDate,
+      order: habit.order,
       days,
     };
   });
@@ -313,3 +393,4 @@ export async function getHabitMatrix(req: AuthenticatedRequest, res: Response): 
     },
   });
 }
+
