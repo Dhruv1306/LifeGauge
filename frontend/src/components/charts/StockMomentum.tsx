@@ -33,7 +33,11 @@ interface MomentumData {
   timeSeries: TimeSeriesPoint[];
 }
 
-export const StockMomentum: React.FC = () => {
+interface StockMomentumProps {
+  refreshTrigger?: number;
+}
+
+export const StockMomentum: React.FC<StockMomentumProps> = ({ refreshTrigger }) => {
   const [data, setData] = useState<MomentumData | null>(null);
   const [daysParam, setDaysParam] = useState<7 | 14 | 30>(14);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,7 +58,7 @@ export const StockMomentum: React.FC = () => {
 
   useEffect(() => {
     fetchMomentum();
-  }, [daysParam]);
+  }, [daysParam, refreshTrigger]);
 
   if (isLoading && !data) {
     return (
@@ -107,21 +111,31 @@ export const StockMomentum: React.FC = () => {
           </p>
         </div>
 
-        {/* Days Filter */}
-        <div className="flex rounded-lg bg-slate-800/80 p-0.5 text-xs self-end sm:self-auto">
-          {[7, 14, 30].map((d) => (
-            <button
-              key={d}
-              onClick={() => setDaysParam(d as 7 | 14 | 30)}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
-                daysParam === d
-                  ? "bg-emerald-600 text-white font-medium"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              {d}D
-            </button>
-          ))}
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          {/* Days Filter */}
+          <div className="flex rounded-lg bg-slate-800/80 p-0.5 text-xs">
+            {[7, 14, 30].map((d) => (
+              <button
+                key={d}
+                onClick={() => setDaysParam(d as 7 | 14 | 30)}
+                className={`px-2.5 py-1 rounded-md transition-colors ${
+                  daysParam === d
+                    ? "bg-emerald-600 text-white font-medium"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                {d}D
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={fetchMomentum}
+            title="Refresh Momentum Data"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin text-emerald-400" : ""}`} />
+          </button>
         </div>
       </div>
 

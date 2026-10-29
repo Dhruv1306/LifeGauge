@@ -138,7 +138,7 @@ export const DashboardPage: React.FC = () => {
           <HabitMatrix onHabitToggled={triggerGlobalRefresh} />
 
           {/* Visual 2: Stock-Style Momentum Trajectory Area Chart */}
-          <StockMomentum />
+          <StockMomentum refreshTrigger={refreshKey} />
         </div>
 
         {/* 3. Lower Row: Time Distribution & Today's Task Manager */}
