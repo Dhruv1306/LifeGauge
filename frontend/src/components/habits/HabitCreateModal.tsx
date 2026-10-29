@@ -14,6 +14,7 @@ export const HabitCreateModal: React.FC<HabitCreateModalProps> = ({
   onCreated,
 }) => {
   const [title, setTitle] = useState("");
+  const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
   const [isEveryday, setIsEveryday] = useState(true);
   const [selectedDays, setSelectedDays] = useState<string[]>([
     "MON",
@@ -56,10 +57,12 @@ export const HabitCreateModal: React.FC<HabitCreateModalProps> = ({
 
     try {
       await api.post("/habits", {
-        title,
+        title: title.trim(),
         targetDays,
+        startDate: startDate || new Date().toISOString().split("T")[0],
       });
       setTitle("");
+      setStartDate(new Date().toISOString().split("T")[0]);
       onCreated();
       onClose();
     } catch (err: unknown) {
@@ -73,6 +76,7 @@ export const HabitCreateModal: React.FC<HabitCreateModalProps> = ({
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
@@ -110,6 +114,23 @@ export const HabitCreateModal: React.FC<HabitCreateModalProps> = ({
               className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
             />
           </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1">
+              Tracking Start Date
+            </label>
+            <input
+              type="date"
+              required
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none [color-scheme:dark]"
+            />
+            <p className="text-[11px] text-slate-500 mt-1">
+              Days prior to this start date will not be counted as missed.
+            </p>
+          </div>
+
 
           <div>
             <label className="block text-xs font-medium text-slate-300 mb-2">

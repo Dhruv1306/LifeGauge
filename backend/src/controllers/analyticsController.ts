@@ -68,10 +68,13 @@ async function fetchDayMetrics(
   let habitsCompleted = 0;
 
   for (const habit of habits) {
+    const isBeforeStart = habit.startDate ? dateStr < habit.startDate : false;
     const isScheduled =
-      !habit.targetDays ||
-      habit.targetDays.toUpperCase() === "ALL" ||
-      habit.targetDays.toUpperCase().split(",").map((s) => s.trim()).includes(dayCode);
+      !isBeforeStart && (
+        !habit.targetDays ||
+        habit.targetDays.toUpperCase() === "ALL" ||
+        habit.targetDays.toUpperCase().split(",").map((s) => s.trim()).includes(dayCode)
+      );
 
     if (isScheduled) {
       habitsScheduled += 1;

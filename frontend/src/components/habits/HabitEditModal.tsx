@@ -6,6 +6,8 @@ export interface HabitItem {
   id: string;
   title: string;
   targetDays: string;
+  startDate?: string | null;
+  order?: number;
   isActive: boolean;
   createdAt: string;
 }
@@ -24,6 +26,7 @@ export const HabitEditModal: React.FC<HabitEditModalProps> = ({
   habit,
 }) => {
   const [title, setTitle] = useState("");
+  const [startDate, setStartDate] = useState("");
   const [isEveryday, setIsEveryday] = useState(true);
   const [selectedDays, setSelectedDays] = useState<string[]>([
     "MON",
@@ -40,6 +43,7 @@ export const HabitEditModal: React.FC<HabitEditModalProps> = ({
   useEffect(() => {
     if (habit) {
       setTitle(habit.title || "");
+      setStartDate(habit.startDate ? habit.startDate.split("T")[0] : "");
       setIsActive(habit.isActive !== false);
       if (habit.targetDays === "ALL") {
         setIsEveryday(true);
@@ -52,6 +56,7 @@ export const HabitEditModal: React.FC<HabitEditModalProps> = ({
       setErrorMsg(null);
     }
   }, [habit, isOpen]);
+
 
   if (!isOpen || !habit) return null;
 
@@ -91,6 +96,7 @@ export const HabitEditModal: React.FC<HabitEditModalProps> = ({
       await api.patch(`/habits/${habit.id}`, {
         title: title.trim(),
         targetDays,
+        startDate: startDate || null,
         isActive,
       });
 
@@ -144,6 +150,22 @@ export const HabitEditModal: React.FC<HabitEditModalProps> = ({
               className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
             />
           </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1">
+              Tracking Start Date
+            </label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none [color-scheme:dark]"
+            />
+            <p className="text-[11px] text-slate-500 mt-1">
+              Days prior to this start date will not be counted as missed.
+            </p>
+          </div>
+
 
           <div>
             <label className="block text-xs font-medium text-slate-300 mb-2">

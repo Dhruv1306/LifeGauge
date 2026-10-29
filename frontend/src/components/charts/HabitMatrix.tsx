@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { api } from "../../api/client";
-import { Flame, Check, RefreshCw } from "lucide-react";
+import { Flame, Check, RefreshCw, X } from "lucide-react";
 
 interface HabitMatrixData {
   startDate: string;
@@ -10,6 +10,8 @@ interface HabitMatrixData {
     id: string;
     title: string;
     targetDays: string;
+    startDate?: string | null;
+    order?: number;
     days: Record<string, { scheduled: boolean; completed: boolean }>;
   }>;
   summary: {
@@ -19,7 +21,15 @@ interface HabitMatrixData {
   };
 }
 
-export const HabitMatrix: React.FC<{ onHabitToggled?: () => void }> = ({ onHabitToggled }) => {
+interface HabitMatrixProps {
+  onHabitToggled?: () => void;
+  refreshTrigger?: number;
+}
+
+export const HabitMatrix: React.FC<HabitMatrixProps> = ({
+  onHabitToggled,
+  refreshTrigger,
+}) => {
   const [data, setData] = useState<HabitMatrixData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [daysCount, setDaysCount] = useState<14 | 21>(14);
@@ -46,7 +56,8 @@ export const HabitMatrix: React.FC<{ onHabitToggled?: () => void }> = ({ onHabit
 
   useEffect(() => {
     fetchMatrix();
-  }, [daysCount]);
+  }, [daysCount, refreshTrigger]);
+
 
   const handleToggle = async (habitId: string, date: string, scheduled: boolean) => {
     if (!scheduled) return; // Can still toggle, but let's toggle optimistically
@@ -144,10 +155,10 @@ export const HabitMatrix: React.FC<{ onHabitToggled?: () => void }> = ({ onHabit
 
       {/* Grid Container */}
       <div className="overflow-x-auto pb-2">
-        <table className="w-full border-collapse">
+        <table className="table-fixed w-full border-collapse">
           <thead>
             <tr>
-              <th className="text-left text-xs font-medium text-slate-400 py-2 pr-4 min-w-[130px]">
+              <th className="text-left text-xs font-medium text-slate-400 py-2.5 px-3 w-44 min-w-[176px] max-w-[176px]">
                 Habit / Routine
               </th>
               {data.dates.map((date) => {
@@ -159,14 +170,14 @@ export const HabitMatrix: React.FC<{ onHabitToggled?: () => void }> = ({ onHabit
                 return (
                   <th
                     key={date}
-                    className={`text-center px-1.5 py-1.5 min-w-[34px] ${
+                    className={`text-center py-2 px-1 w-9 min-w-[36px] max-w-[36px] ${
                       isToday ? "text-emerald-400 font-bold" : "text-slate-400 font-normal"
                     }`}
                   >
                     <div className="text-[10px] tracking-tight">{dayName}</div>
                     <div
                       className={`text-[11px] font-mono ${
-                        isToday ? "rounded-full bg-emerald-500/20 px-1 py-0.5 text-emerald-400" : ""
+                        isToday ? "rounded-full bg-emerald-500/20 px-1 py-0.5 text-emerald-400 font-bold" : ""
                       }`}
                     >
                       {dayNum}
@@ -179,9 +190,9 @@ export const HabitMatrix: React.FC<{ onHabitToggled?: () => void }> = ({ onHabit
           <tbody className="divide-y divide-slate-800/60">
             {data.habits.map((habit) => (
               <tr key={habit.id} className="hover:bg-slate-800/30 transition-colors">
-                <td className="py-2.5 pr-4 text-xs font-medium text-slate-200 truncate max-w-[160px]">
-                  <div className="flex items-center gap-1.5">
-                    <span className="truncate" title={habit.title}>{habit.title}</span>
+                <td className="py-2 px-3 text-xs font-medium text-slate-200 truncate w-44 min-w-[176px] max-w-[176px]">
+                  <div className="truncate font-medium text-slate-200" title={habit.title}>
+                    {habit.title}
                   </div>
                 </td>
 
@@ -191,22 +202,22 @@ export const HabitMatrix: React.FC<{ onHabitToggled?: () => void }> = ({ onHabit
                   const isCompleted = dayState.completed;
 
                   return (
-                    <td key={date} className="p-1 text-center">
+                    <td key={date} className="py-2 px-1 text-center w-9 min-w-[36px] max-w-[36px]">
                       <button
                         onClick={() => handleToggle(habit.id, date, isScheduled)}
                         title={`${habit.title} on ${date}: ${
                           !isScheduled
-                            ? "Unscheduled (Rest Day)"
+                            ? "Unscheduled (Rest Day / Prior to Start)"
                             : isCompleted
                             ? "Completed (Click to uncheck)"
                             : "Missed / Incomplete (Click to complete)"
                         }`}
-                        className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all ${
+                        className={`h-7 w-7 mx-auto rounded-lg flex items-center justify-center transition-all ${
                           !isScheduled
                             ? "bg-slate-800/30 border border-slate-800/50 text-slate-600 hover:border-slate-700"
                             : isCompleted
                             ? "bg-emerald-500 text-slate-950 font-bold shadow-sm shadow-emerald-500/40 hover:scale-105"
-                            : "bg-amber-950/40 border border-amber-800/50 text-amber-500 hover:border-amber-600 hover:bg-amber-900/40"
+                            : "bg-rose-950/50 border border-rose-800/60 text-rose-400 hover:border-rose-700 hover:bg-rose-900/40"
                         }`}
                       >
                         {!isScheduled ? (
@@ -214,7 +225,7 @@ export const HabitMatrix: React.FC<{ onHabitToggled?: () => void }> = ({ onHabit
                         ) : isCompleted ? (
                           <Check className="h-4 w-4 stroke-[3]" />
                         ) : (
-                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500/60" />
+                          <X className="h-3.5 w-3.5 stroke-[2.5]" />
                         )}
                       </button>
                     </td>
@@ -229,18 +240,25 @@ export const HabitMatrix: React.FC<{ onHabitToggled?: () => void }> = ({ onHabit
       {/* Legend */}
       <div className="flex items-center justify-end gap-4 pt-3 text-[11px] text-slate-400 border-t border-slate-800/60">
         <div className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-md bg-emerald-500 shadow-sm shadow-emerald-500/30" />
+          <span className="h-3.5 w-3.5 rounded-md bg-emerald-500 shadow-sm shadow-emerald-500/30 flex items-center justify-center text-slate-950">
+            <Check className="h-2.5 w-2.5 stroke-[3]" />
+          </span>
           <span>Completed</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-md bg-amber-950/60 border border-amber-800/50" />
+          <span className="h-3.5 w-3.5 rounded-md bg-rose-950/70 border border-rose-800/80 flex items-center justify-center text-rose-400">
+            <X className="h-2.5 w-2.5 stroke-[2.5]" />
+          </span>
           <span>Missed</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-md bg-slate-800/40 border border-slate-800" />
+          <span className="h-3.5 w-3.5 rounded-md bg-slate-800/40 border border-slate-800 flex items-center justify-center text-slate-600">
+            &bull;
+          </span>
           <span>Rest / Unscheduled</span>
         </div>
       </div>
     </div>
   );
 };
+

@@ -61,6 +61,8 @@ model Habit {
   userId     String
   title      String
   targetDays String     @default("ALL") // "MON,TUE,WED,THU,FRI,SAT,SUN" or "ALL"
+  startDate  String?    // "YYYY-MM-DD" - start date of habit
+  order      Int        @default(0)     // display order position
   isActive   Boolean    @default(true)
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
@@ -69,6 +71,7 @@ model Habit {
   logs       HabitLog[]
 
   @@index([userId])
+  @@index([userId, order])
   @@map("habits")
 }
 
