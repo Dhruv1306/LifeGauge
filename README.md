@@ -1,4 +1,3 @@
-
 # LifeGauge ⏱️📊
 
 > **An AI-Assisted Personal Productivity and Life Analytics Platform**
@@ -106,7 +105,7 @@ Every tool and package in LifeGauge was chosen with a specific purpose. Here is 
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/LifeGauge.git
+git clone https://github.com/dhruv1306/LifeGauge.git
 cd LifeGauge
 
 # Install all workspace dependencies

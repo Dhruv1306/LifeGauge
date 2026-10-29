@@ -9,6 +9,7 @@ import { Response } from "express";
 // Mock Prisma
 vi.mock("../src/lib/prisma", () => ({
   prisma: {
+    $transaction: vi.fn((promises) => Promise.all(promises)),
     task: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
@@ -37,6 +38,7 @@ vi.mock("../src/lib/prisma", () => ({
     },
   },
 }));
+
 
 function mockResponse() {
   const res = {} as Response;
@@ -256,18 +258,56 @@ describe("Milestone 2: Core Data Modules (Tasks, Habits/Matrix, Time Entries)", 
   });
 
   describe("Habits & Habit Matrix Controller", () => {
-    it("should create a habit with targetDays definition", async () => {
+    it("should create a habit with targetDays definition and defaults", async () => {
       const req = {
         user: { id: "user-123", email: "user@lifegauge.com" },
         body: { title: "Wake up at 6 AM", targetDays: "MON,TUE,WED,THU,FRI" },
       } as unknown as AuthenticatedRequest;
       const res = mockResponse();
 
+      vi.mocked(prisma.habit.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.habit.create).mockResolvedValue({
         id: "habit-1",
         userId: "user-123",
         title: "Wake up at 6 AM",
         targetDays: "MON,TUE,WED,THU,FRI",
+        startDate: "2026-10-29",
+        order: 0,
+      } as never);
+
+      await habitController.createHabit(req, res);
+
+      expect(prisma.habit.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          userId: "user-123",
+          title: "Wake up at 6 AM",
+          targetDays: "MON,TUE,WED,THU,FRI",
+          startDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+          order: 0,
+        }),
+      });
+      expect(res.status).toHaveBeenCalledWith(201);
+    });
+
+    it("should create a habit with explicit startDate and order", async () => {
+      const req = {
+        user: { id: "user-123", email: "user@lifegauge.com" },
+        body: {
+          title: "Evening Reading",
+          targetDays: "ALL",
+          startDate: "2026-11-01",
+          order: 5,
+        },
+      } as unknown as AuthenticatedRequest;
+      const res = mockResponse();
+
+      vi.mocked(prisma.habit.create).mockResolvedValue({
+        id: "habit-2",
+        userId: "user-123",
+        title: "Evening Reading",
+        targetDays: "ALL",
+        startDate: "2026-11-01",
+        order: 5,
       } as never);
 
       await habitController.createHabit(req, res);
@@ -275,12 +315,62 @@ describe("Milestone 2: Core Data Modules (Tasks, Habits/Matrix, Time Entries)", 
       expect(prisma.habit.create).toHaveBeenCalledWith({
         data: {
           userId: "user-123",
-          title: "Wake up at 6 AM",
-          targetDays: "MON,TUE,WED,THU,FRI",
+          title: "Evening Reading",
+          targetDays: "ALL",
+          startDate: "2026-11-01",
+          order: 5,
         },
       });
       expect(res.status).toHaveBeenCalledWith(201);
     });
+
+    it("should reorder habits belonging to the authenticated user", async () => {
+      const req = {
+        user: { id: "user-123", email: "user@lifegauge.com" },
+        body: { habitIds: ["habit-b", "habit-a"] },
+      } as unknown as AuthenticatedRequest;
+      const res = mockResponse();
+
+      vi.mocked(prisma.habit.findMany).mockResolvedValue([
+        { id: "habit-b" },
+        { id: "habit-a" },
+      ] as never);
+
+      await habitController.reorderHabits(req, res);
+
+      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          message: "Habits reordered successfully",
+        })
+      );
+    });
+
+    it("should reject reordering if any habit ID does not belong to user", async () => {
+      const req = {
+        user: { id: "user-123", email: "user@lifegauge.com" },
+        body: { habitIds: ["habit-b", "habit-other"] },
+      } as unknown as AuthenticatedRequest;
+      const res = mockResponse();
+
+      vi.mocked(prisma.habit.findMany).mockResolvedValue([
+        { id: "habit-b" }, // only 1 returned out of 2 requested
+      ] as never);
+
+      await habitController.reorderHabits(req, res);
+
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error: "One or more habit IDs are invalid or do not belong to you.",
+        })
+      );
+    });
+
 
     it("should update habit title, targetDays, and isActive", async () => {
       const req = {
@@ -385,7 +475,48 @@ describe("Milestone 2: Core Data Modules (Tasks, Habits/Matrix, Time Entries)", 
       expect(jsonResponse.summary.totalCompleted).toBe(2);
       expect(jsonResponse.summary.consistencyRate).toBe(67);
     });
+
+    it("should not mark days before habit startDate as scheduled or missed", async () => {
+      const req = {
+        user: { id: "user-123", email: "user@lifegauge.com" },
+        query: { startDate: "2026-10-01", endDate: "2026-10-03" },
+      } as unknown as AuthenticatedRequest;
+      const res = mockResponse();
+
+      // Habit started on 2026-10-02 (so 2026-10-01 is prior to startDate)
+      const mockHabits = [
+        {
+          id: "habit-future",
+          title: "New Workout Routine",
+          targetDays: "ALL",
+          startDate: "2026-10-02",
+          order: 0,
+          logs: [
+            { date: "2026-10-02", isCompleted: true },
+          ],
+        },
+      ];
+      vi.mocked(prisma.habit.findMany).mockResolvedValue(mockHabits as never);
+
+      await habitController.getHabitMatrix(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      const jsonResponse = vi.mocked(res.json).mock.calls[0][0];
+
+      expect(jsonResponse.success).toBe(true);
+      // 2026-10-01 is before startDate: must NOT be scheduled
+      expect(jsonResponse.habits[0].days["2026-10-01"]).toEqual({ scheduled: false, completed: false });
+      // 2026-10-02 is on/after startDate: scheduled and completed
+      expect(jsonResponse.habits[0].days["2026-10-02"]).toEqual({ scheduled: true, completed: true });
+      // 2026-10-03 is after startDate: scheduled and missed
+      expect(jsonResponse.habits[0].days["2026-10-03"]).toEqual({ scheduled: true, completed: false });
+      // Total scheduled should only be 2, not 3!
+      expect(jsonResponse.summary.totalScheduled).toBe(2);
+      expect(jsonResponse.summary.totalCompleted).toBe(1);
+      expect(jsonResponse.summary.consistencyRate).toBe(50);
+    });
   });
+
 
   describe("Time Entries & Time Blocking Controller", () => {
     it("should record a manual time block with category and duration", async () => {

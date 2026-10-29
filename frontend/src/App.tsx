@@ -9,6 +9,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { TasksPage } from "./pages/TasksPage";
 import { HabitsPage } from "./pages/HabitsPage";
 import { TimePage } from "./pages/TimePage";
+import { ActionToast } from "./components/common/ActionToast";
 
 export const App: React.FC = () => {
   return (
@@ -60,6 +61,7 @@ export const App: React.FC = () => {
           {/* Fallback to Public Landing */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <ActionToast />
       </BrowserRouter>
     </AuthProvider>
   );
