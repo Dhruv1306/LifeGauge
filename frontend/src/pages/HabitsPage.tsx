@@ -3,7 +3,9 @@ import { api } from "../api/client";
 import { Navbar } from "../components/common/Navbar";
 import { HabitMatrix } from "../components/charts/HabitMatrix";
 import { HabitCreateModal } from "../components/habits/HabitCreateModal";
-import { Flame, Plus, Trash2, Calendar } from "lucide-react";
+import { HabitEditModal } from "../components/habits/HabitEditModal";
+import { WindowDialogUpdation } from "../components/common/WindowDialogUpdation";
+import { Flame, Plus, Trash2, Calendar, Pencil } from "lucide-react";
 
 interface HabitItem {
   id: string;
@@ -16,7 +18,9 @@ interface HabitItem {
 export const HabitsPage: React.FC = () => {
   const [habits, setHabits] = useState<HabitItem[]>([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<HabitItem | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [habitToDelete, setHabitToDelete] = useState<string | null>(null);
 
   const fetchHabits = async () => {
     try {
@@ -34,12 +38,18 @@ export const HabitsPage: React.FC = () => {
   }, [refreshKey]);
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Delete this habit and all its history?")) return;
+    setHabitToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!habitToDelete) return;
     try {
-      await api.delete(`/habits/${id}`);
+      await api.delete(`/habits/${habitToDelete}`);
       setRefreshKey((k) => k + 1);
     } catch (err) {
       console.error("Failed to delete habit", err);
+    } finally {
+      setHabitToDelete(null);
     }
   };
 
@@ -55,7 +65,8 @@ export const HabitsPage: React.FC = () => {
               Habits & Consistency Matrix
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Build daily momentum and review your routines on the LeetCode / GitHub style punchcard grid.
+              Build daily momentum and review your routines on the LeetCode /
+              GitHub style punchcard grid.
             </p>
           </div>
 
@@ -69,35 +80,59 @@ export const HabitsPage: React.FC = () => {
         </div>
 
         {/* Embedded Habit Matrix */}
-        <HabitMatrix key={refreshKey} onHabitToggled={() => setRefreshKey((k) => k + 1)} />
+        <HabitMatrix
+          key={refreshKey}
+          onHabitToggled={() => setRefreshKey((k) => k + 1)}
+        />
 
         {/* Active Habits List */}
         <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl">
-          <h3 className="text-base font-semibold text-white mb-4">Configured Habits</h3>
+          <h3 className="text-base font-semibold text-white mb-4">
+            Configured Habits
+          </h3>
 
           {habits.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-400">
-              No habits configured yet. Click &ldquo;New Habit&rdquo; to start tracking.
+              No habits configured yet. Click &ldquo;New Habit&rdquo; to start
+              tracking.
             </div>
           ) : (
             <div className="divide-y divide-slate-800/80">
               {habits.map((habit) => (
-                <div key={habit.id} className="py-3 flex items-center justify-between">
+                <div
+                  key={habit.id}
+                  className="py-3 flex items-center justify-between"
+                >
                   <div>
-                    <h4 className="text-sm font-medium text-white">{habit.title}</h4>
+                    <h4 className="text-sm font-medium text-white">
+                      {habit.title}
+                    </h4>
                     <span className="flex items-center gap-1 text-[11px] font-mono text-slate-400 mt-0.5">
                       <Calendar className="h-3 w-3 text-amber-400" />
-                      Frequency: {habit.targetDays === "ALL" ? "Everyday (7 Days)" : habit.targetDays}
+                      Frequency:{" "}
+                      {habit.targetDays === "ALL"
+                        ? "Everyday (7 Days)"
+                        : habit.targetDays}
                     </span>
                   </div>
 
-                  <button
-                    onClick={() => handleDelete(habit.id)}
-                    title="Delete Habit"
-                    className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setEditingHabit(habit)}
+                      title="Edit Habit"
+                      className="p-1.5 text-slate-500 hover:text-amber-400 hover:bg-amber-950/30 rounded-lg transition-colors"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(habit.id)}
+                      title="Delete Habit"
+                      className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -109,6 +144,22 @@ export const HabitsPage: React.FC = () => {
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onCreated={() => setRefreshKey((k) => k + 1)}
+      />
+
+      <HabitEditModal
+        isOpen={!!editingHabit}
+        habit={editingHabit}
+        onClose={() => setEditingHabit(null)}
+        onUpdated={() => setRefreshKey((k) => k + 1)}
+      />
+
+      <WindowDialogUpdation
+        isOpen={!!habitToDelete}
+        title="Delete habit"
+        message="Delete this habit and all its history?"
+        confirmLabel="Delete"
+        onConfirm={confirmDelete}
+        onCancel={() => setHabitToDelete(null)}
       />
     </div>
   );

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { authStorage } from "../utils/authStorage";
+import { TOAST_EVENT } from "../components/common/ActionToast";
 
 const baseURL = import.meta.env.VITE_API_URL || "/api";
 
@@ -21,7 +22,15 @@ api.interceptors.request.use((config) => {
 
 // Handle 401 Unauthorized responses
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {           // global backend-message listener
+    const message = response.data?.message;
+    if (typeof window !== "undefined" && typeof message === "string") {
+      window.dispatchEvent(
+        new CustomEvent(TOAST_EVENT, { detail: { message } }),
+      );
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
       authStorage.clear();
@@ -31,5 +40,5 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );

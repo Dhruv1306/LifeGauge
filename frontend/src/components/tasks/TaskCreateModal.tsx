@@ -33,8 +33,8 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
     try {
       await api.post("/tasks", {
-        title,
-        description: description || null,
+        title: title.trim(),
+        description: description.trim() ? description.trim() : null,
         priority,
         dueDate: dueDate ? new Date(`${dueDate}T12:00:00Z`).toISOString() : null,
       });
@@ -149,7 +149,7 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               className="w-1/2 flex items-center justify-center gap-1.5 rounded-xl bg-cyan-600 py-2.5 text-xs font-medium text-white hover:bg-cyan-500 disabled:opacity-50"
             >
               <Plus className="h-4 w-4" />
-              {isSubmitting ? "Creating..." : "Save Task"}
+              {isSubmitting ? "Creating..." : "Create Task"}
             </button>
           </div>
         </form>

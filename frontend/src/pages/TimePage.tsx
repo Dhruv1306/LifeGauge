@@ -6,6 +6,7 @@ import { TimeLoggerModal } from "../components/dashboard/TimeLoggerModal";
 import { TimeDistribution } from "../components/charts/TimeDistribution";
 import { GoogleCalendarView } from "../components/calendar/GoogleCalendarView";
 import { GoogleCalendarConnect } from "../components/calendar/GoogleCalendarConnect";
+import { WindowDialogUpdation } from "../components/common/WindowDialogUpdation";
 import {
   Clock,
   Plus,
@@ -34,16 +35,26 @@ interface TimeEntryItem {
 
 export const TimePage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = (searchParams.get("tab") as "calendar" | "focus") || "calendar";
+  const initialTab =
+    (searchParams.get("tab") as "calendar" | "focus") || "calendar";
   const [activeTab, setActiveTab] = useState<"calendar" | "focus">(initialTab);
 
   // Google Calendar Connection Status
-  const [isCalendarConnected, setIsCalendarConnected] = useState<boolean | null>(null);
+  const [isCalendarConnected, setIsCalendarConnected] = useState<
+    boolean | null
+  >(null);
   const [googleEmail, setGoogleEmail] = useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
 
   // Notification banners (OAuth redirect callbacks)
-  const [toastMsg, setToastMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [toastMsg, setToastMsg] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+  const [timeEntryToDelete, setTimeEntryToDelete] = useState<string | null>(
+    null,
+  );
+  const [isDisconnectConfirmOpen, setIsDisconnectConfirmOpen] = useState(false);
 
   // Focus Logs state
   const [entries, setEntries] = useState<TimeEntryItem[]>([]);
@@ -72,17 +83,26 @@ export const TimePage: React.FC = () => {
     // Check for OAuth redirect messages in query string
     const oauthStatus = searchParams.get("oauth");
     if (oauthStatus === "success") {
-      setToastMsg({ type: "success", text: "Successfully connected to Google Calendar! Two-way synchronization active." });
+      setToastMsg({
+        type: "success",
+        text: "Successfully connected to Google Calendar! Two-way synchronization active.",
+      });
       setActiveTab("calendar");
       checkCalendarStatus();
       // Clean query params
       setSearchParams({ tab: "calendar" });
     } else if (oauthStatus === "denied") {
-      setToastMsg({ type: "error", text: "Google authorization was cancelled." });
+      setToastMsg({
+        type: "error",
+        text: "Google authorization was cancelled.",
+      });
       setSearchParams({ tab: "calendar" });
     } else if (oauthStatus === "error") {
       const reason = searchParams.get("reason") || "Authorization failed.";
-      setToastMsg({ type: "error", text: `Google connection failed: ${decodeURIComponent(reason)}` });
+      setToastMsg({
+        type: "error",
+        text: `Google connection failed: ${decodeURIComponent(reason)}`,
+      });
       setSearchParams({ tab: "calendar" });
     }
   }, []);
@@ -92,7 +112,8 @@ export const TimePage: React.FC = () => {
     setIsLoadingEntries(true);
     try {
       let query = "/time-entries?";
-      if (categoryFilter !== "all") query += `category=${encodeURIComponent(categoryFilter)}&`;
+      if (categoryFilter !== "all")
+        query += `category=${encodeURIComponent(categoryFilter)}&`;
 
       const res = await api.get(query);
       if (res.data.success) {
@@ -112,25 +133,35 @@ export const TimePage: React.FC = () => {
   }, [categoryFilter, refreshKey, activeTab]);
 
   const handleDeleteTimeEntry = async (id: string) => {
-    if (!window.confirm("Delete this focus time block?")) return;
+    setTimeEntryToDelete(id);
+  };
+
+  const confirmDeleteTimeEntry = async () => {
+    if (!timeEntryToDelete) return;
     try {
-      await api.delete(`/time-entries/${id}`);
+      await api.delete(`/time-entries/${timeEntryToDelete}`);
       setRefreshKey((k) => k + 1);
     } catch (err) {
       console.error("Failed to delete time entry", err);
+    } finally {
+      setTimeEntryToDelete(null);
     }
   };
 
   const handleDisconnectCalendar = async () => {
-    if (!window.confirm("Disconnect Google Calendar? Local cached events will be cleared. No Google events will be deleted.")) return;
+    setIsDisconnectConfirmOpen(true);
+  };
+
+  const confirmDisconnectCalendar = async () => {
     try {
       await api.post("/calendar/google/disconnect");
       setIsCalendarConnected(false);
       setGoogleEmail(null);
       setLastSyncedAt(null);
-      setToastMsg({ type: "success", text: "Google Calendar disconnected." });
     } catch (err) {
       console.error("Failed to disconnect calendar", err);
+    } finally {
+      setIsDisconnectConfirmOpen(false);
     }
   };
 
@@ -139,7 +170,16 @@ export const TimePage: React.FC = () => {
     setSearchParams({ tab });
   };
 
-  const categories = ["all", "DSA", "Study", "Coding", "College", "Fitness", "Reading", "General"];
+  const categories = [
+    "all",
+    "DSA",
+    "Study",
+    "Coding",
+    "College",
+    "Fitness",
+    "Reading",
+    "General",
+  ];
 
   return (
     <div className="min-h-screen bg-slate-950 pb-16">
@@ -154,7 +194,8 @@ export const TimePage: React.FC = () => {
               <span>Time Blocks & Calendar</span>
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Google Calendar schedule management & LifeGauge focus time tracking.
+              Google Calendar schedule management & LifeGauge focus time
+              tracking.
             </p>
           </div>
 
@@ -280,27 +321,38 @@ export const TimePage: React.FC = () => {
             {/* Recorded Focus Sessions List */}
             <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-semibold text-white">Recorded Focus Sessions</h3>
-                <span className="text-xs text-slate-500 font-mono">Feeds LifeGauge Analytics</span>
+                <h3 className="text-base font-semibold text-white">
+                  Recorded Focus Sessions
+                </h3>
+                <span className="text-xs text-slate-500 font-mono">
+                  Feeds LifeGauge Analytics
+                </span>
               </div>
 
               {isLoadingEntries ? (
-                <div className="py-8 text-center text-xs text-slate-400">Loading focus entries...</div>
+                <div className="py-8 text-center text-xs text-slate-400">
+                  Loading focus entries...
+                </div>
               ) : entries.length === 0 ? (
                 <div className="py-12 text-center text-xs text-slate-400">
-                  No focus blocks found. Click &ldquo;Log Focus Session&rdquo; above to record your deep work.
+                  No focus blocks found. Click &ldquo;Log Focus Session&rdquo;
+                  above to record your deep work.
                 </div>
               ) : (
                 <div className="divide-y divide-slate-800/80">
                   {entries.map((entry) => (
-                    <div key={entry.id} className="py-3.5 flex items-start justify-between">
+                    <div
+                      key={entry.id}
+                      className="py-3.5 flex items-start justify-between"
+                    >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2.5">
                           <span className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
                             {entry.category}
                           </span>
                           <span className="text-xs font-mono font-bold text-white">
-                            {(entry.durationMin / 60).toFixed(1)} hrs ({entry.durationMin} min)
+                            {(entry.durationMin / 60).toFixed(1)} hrs (
+                            {entry.durationMin} min)
                           </span>
                           {entry.startTime && entry.endTime && (
                             <span className="text-[11px] font-mono text-slate-500">
@@ -310,7 +362,9 @@ export const TimePage: React.FC = () => {
                         </div>
 
                         {entry.description && (
-                          <p className="text-xs text-slate-300">{entry.description}</p>
+                          <p className="text-xs text-slate-300">
+                            {entry.description}
+                          </p>
                         )}
 
                         <div className="flex items-center gap-3 text-[11px] text-slate-500">
@@ -347,6 +401,24 @@ export const TimePage: React.FC = () => {
         isOpen={isLoggerOpen}
         onClose={() => setIsLoggerOpen(false)}
         onLogged={() => setRefreshKey((k) => k + 1)}
+      />
+
+      <WindowDialogUpdation
+        isOpen={!!timeEntryToDelete}
+        title="Delete focus time block"
+        message="Delete this focus time block?"
+        confirmLabel="Delete"
+        onConfirm={confirmDeleteTimeEntry}
+        onCancel={() => setTimeEntryToDelete(null)}
+      />
+
+      <WindowDialogUpdation
+        isOpen={isDisconnectConfirmOpen}
+        title="Disconnect Google Calendar"
+        message="Disconnect Google Calendar? Local cached events will be cleared. No Google events will be deleted."
+        confirmLabel="Disconnect"
+        onConfirm={confirmDisconnectCalendar}
+        onCancel={() => setIsDisconnectConfirmOpen(false)}
       />
     </div>
   );

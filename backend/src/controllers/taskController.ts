@@ -6,14 +6,14 @@ import { Priority } from "@prisma/client";
 
 const createTaskSchema = z.object({
   title: z.string().min(1, "Task title is required").trim(),
-  description: z.string().optional(),
+  description: z.string().trim().optional().nullable(),
   priority: z.nativeEnum(Priority).default(Priority.MEDIUM),
   dueDate: z.string().datetime().optional().nullable(),
 });
 
 const updateTaskSchema = z.object({
   title: z.string().min(1).trim().optional(),
-  description: z.string().optional().nullable(),
+  description: z.string().trim().optional().nullable(),
   priority: z.nativeEnum(Priority).optional(),
   dueDate: z.string().datetime().optional().nullable(),
   isCompleted: z.boolean().optional(),
@@ -118,7 +118,7 @@ export async function createTask(req: AuthenticatedRequest, res: Response): Prom
     data: {
       userId,
       title,
-      description: description || null,
+      description: description && description.trim() !== "" ? description.trim() : null,
       priority,
       dueDate: dueDate ? new Date(dueDate) : null,
     },
@@ -163,7 +163,9 @@ export async function updateTask(req: AuthenticatedRequest, res: Response): Prom
   const updateData: any = {};
 
   if (data.title !== undefined) updateData.title = data.title;
-  if (data.description !== undefined) updateData.description = data.description;
+  if (data.description !== undefined) {
+    updateData.description = data.description && data.description.trim() !== "" ? data.description.trim() : null;
+  }
   if (data.priority !== undefined) updateData.priority = data.priority;
   if (data.dueDate !== undefined) updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
 

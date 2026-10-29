@@ -117,6 +117,59 @@ describe("Milestone 2: Core Data Modules (Tasks, Habits/Matrix, Time Entries)", 
       expect(res.status).toHaveBeenCalledWith(201);
     });
 
+    it("should accept null or empty string description and persist as null", async () => {
+      const reqWithNull = {
+        user: { id: "user-123", email: "user@lifegauge.com" },
+        body: {
+          title: "Deploy project",
+          description: null,
+          priority: "LOW",
+        },
+      } as unknown as AuthenticatedRequest;
+      const resWithNull = mockResponse();
+
+      vi.mocked(prisma.task.create).mockResolvedValue({
+        id: "task-null-desc",
+        userId: "user-123",
+        title: "Deploy project",
+        description: null,
+        priority: "LOW",
+        isCompleted: false,
+      } as never);
+
+      await taskController.createTask(reqWithNull, resWithNull);
+
+      expect(resWithNull.status).toHaveBeenCalledWith(201);
+      expect(prisma.task.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          userId: "user-123",
+          title: "Deploy project",
+          description: null,
+        }),
+      });
+
+      const reqWithEmpty = {
+        user: { id: "user-123", email: "user@lifegauge.com" },
+        body: {
+          title: "Deploy project 2",
+          description: "   ",
+          priority: "LOW",
+        },
+      } as unknown as AuthenticatedRequest;
+      const resWithEmpty = mockResponse();
+
+      await taskController.createTask(reqWithEmpty, resWithEmpty);
+
+      expect(resWithEmpty.status).toHaveBeenCalledWith(201);
+      expect(prisma.task.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          userId: "user-123",
+          title: "Deploy project 2",
+          description: null,
+        }),
+      });
+    });
+
     it("should reject task creation if title is empty (400)", async () => {
       const req = {
         user: { id: "user-123", email: "user@lifegauge.com" },
@@ -128,6 +181,37 @@ describe("Milestone 2: Core Data Modules (Tasks, Habits/Matrix, Time Entries)", 
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(prisma.task.create).not.toHaveBeenCalled();
+    });
+
+    it("should update task title, description, and priority", async () => {
+      const req = {
+        user: { id: "user-123", email: "user@lifegauge.com" },
+        params: { id: "task-1" },
+        body: { title: "Updated Title", description: "New details", priority: "HIGH" },
+      } as unknown as AuthenticatedRequest;
+      const res = mockResponse();
+
+      vi.mocked(prisma.task.findFirst).mockResolvedValue({ id: "task-1", userId: "user-123" } as never);
+      vi.mocked(prisma.task.update).mockResolvedValue({
+        id: "task-1",
+        title: "Updated Title",
+        description: "New details",
+        priority: "HIGH",
+      } as never);
+
+      await taskController.updateTask(req, res);
+
+      expect(prisma.task.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "task-1" },
+          data: expect.objectContaining({
+            title: "Updated Title",
+            description: "New details",
+            priority: "HIGH",
+          }),
+        })
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
     });
 
     it("should update task and toggle completion with completedAt timestamp", async () => {
@@ -196,6 +280,45 @@ describe("Milestone 2: Core Data Modules (Tasks, Habits/Matrix, Time Entries)", 
         },
       });
       expect(res.status).toHaveBeenCalledWith(201);
+    });
+
+    it("should update habit title, targetDays, and isActive", async () => {
+      const req = {
+        user: { id: "user-123", email: "user@lifegauge.com" },
+        params: { id: "habit-1" },
+        body: { title: "Morning Run", targetDays: "ALL", isActive: true },
+      } as unknown as AuthenticatedRequest;
+      const res = mockResponse();
+
+      vi.mocked(prisma.habit.findFirst).mockResolvedValue({
+        id: "habit-1",
+        userId: "user-123",
+        title: "Old Habit",
+        targetDays: "MON,FRI",
+        isActive: false,
+      } as never);
+
+      vi.mocked(prisma.habit.update).mockResolvedValue({
+        id: "habit-1",
+        userId: "user-123",
+        title: "Morning Run",
+        targetDays: "ALL",
+        isActive: true,
+      } as never);
+
+      await habitController.updateHabit(req, res);
+
+      expect(prisma.habit.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "habit-1" },
+          data: expect.objectContaining({
+            title: "Morning Run",
+            targetDays: "ALL",
+            isActive: true,
+          }),
+        })
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
     });
 
     it("should toggle habit completion for a specific date", async () => {

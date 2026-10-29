@@ -8,6 +8,15 @@
   }
 }
 
+@keyframes lifegauge-toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
 /* Custom Cockpit Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

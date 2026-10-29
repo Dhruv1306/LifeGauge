@@ -2,16 +2,30 @@ import React, { useState, useEffect } from "react";
 import { api } from "../api/client";
 import { Navbar } from "../components/common/Navbar";
 import { TaskCreateModal } from "../components/tasks/TaskCreateModal";
+import { TaskEditModal } from "../components/tasks/TaskEditModal";
 import { TaskItem } from "../components/tasks/TodayTaskList";
-import { CheckSquare, Plus, Trash2, Check, Search, Filter } from "lucide-react";
+import { WindowDialogUpdation } from "../components/common/WindowDialogUpdation";
+import {
+  CheckSquare,
+  Plus,
+  Trash2,
+  Check,
+  Search,
+  Filter,
+  Pencil,
+} from "lucide-react";
 
 export const TasksPage: React.FC = () => {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "completed">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "completed"
+  >("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
 
   const fetchTasks = async () => {
     setIsLoading(true);
@@ -46,12 +60,18 @@ export const TasksPage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this task?")) return;
+    setTaskToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!taskToDelete) return;
     try {
-      await api.delete(`/tasks/${id}`);
+      await api.delete(`/tasks/${taskToDelete}`);
       fetchTasks();
     } catch (err) {
       console.error("Failed to delete task", err);
+    } finally {
+      setTaskToDelete(null);
     }
   };
 
@@ -73,7 +93,8 @@ export const TasksPage: React.FC = () => {
               Tasks & Priorities
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Organize scheduled work, set priority weightings, and track execution.
+              Organize scheduled work, set priority weightings, and track
+              execution.
             </p>
           </div>
 
@@ -132,7 +153,9 @@ export const TasksPage: React.FC = () => {
 
         {/* Task List */}
         {isLoading ? (
-          <div className="py-12 text-center text-xs text-slate-400">Loading tasks...</div>
+          <div className="py-12 text-center text-xs text-slate-400">
+            Loading tasks...
+          </div>
         ) : tasks.length === 0 ? (
           <div className="rounded-2xl border border-slate-800 bg-slate-900/40 py-16 text-center text-xs text-slate-400">
             No tasks found matching your filter criteria.
@@ -157,19 +180,25 @@ export const TasksPage: React.FC = () => {
                         : "border-slate-600 hover:border-cyan-400"
                     }`}
                   >
-                    {task.isCompleted && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                    {task.isCompleted && (
+                      <Check className="h-3.5 w-3.5 stroke-[3]" />
+                    )}
                   </button>
 
                   <div>
                     <h3
                       className={`text-sm font-medium ${
-                        task.isCompleted ? "line-through text-slate-400" : "text-white"
+                        task.isCompleted
+                          ? "line-through text-slate-400"
+                          : "text-white"
                       }`}
                     >
                       {task.title}
                     </h3>
                     {task.description && (
-                      <p className="text-xs text-slate-400 mt-1">{task.description}</p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {task.description}
+                      </p>
                     )}
                     {task.dueDate && (
                       <span className="inline-block text-[11px] font-mono text-slate-400 mt-1.5">
@@ -179,14 +208,22 @@ export const TasksPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
                   <span
-                    className={`text-[10px] font-mono px-2 py-0.5 rounded-md border font-semibold ${
+                    className={`text-[10px] font-mono px-2 py-0.5 rounded-md border font-semibold mr-1.5 ${
                       priorityStyles[task.priority]
                     }`}
                   >
                     {task.priority}
                   </span>
+
+                  <button
+                    onClick={() => setEditingTask(task)}
+                    title="Edit Task"
+                    className="p-1.5 text-slate-500 hover:text-cyan-400 hover:bg-cyan-950/30 rounded-lg transition-colors"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
 
                   <button
                     onClick={() => handleDelete(task.id)}
@@ -206,6 +243,22 @@ export const TasksPage: React.FC = () => {
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onCreated={fetchTasks}
+      />
+
+      <TaskEditModal
+        isOpen={!!editingTask}
+        task={editingTask}
+        onClose={() => setEditingTask(null)}
+        onUpdated={fetchTasks}
+      />
+
+      <WindowDialogUpdation
+        isOpen={!!taskToDelete}
+        title="Delete task"
+        message="Are you sure you want to delete this task?"
+        confirmLabel="Delete"
+        onConfirm={confirmDelete}
+        onCancel={() => setTaskToDelete(null)}
       />
     </div>
   );
