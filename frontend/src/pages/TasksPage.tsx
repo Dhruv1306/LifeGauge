@@ -85,7 +85,7 @@ export const TasksPage: React.FC = () => {
     <div className="min-h-screen bg-slate-950 pb-16">
       <Navbar />
 
-      <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
           <div>
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
