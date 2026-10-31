@@ -142,7 +142,7 @@ export const HabitMatrix: React.FC<HabitMatrixProps> = ({
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Click any cell to toggle your routine completion for that day.
+            Click the cell to toggle your routine completion for that day.
           </p>
         </div>
 
@@ -180,7 +180,7 @@ export const HabitMatrix: React.FC<HabitMatrixProps> = ({
       <div className="grid grid-cols-[176px_minmax(0,1fr)]">
         <div className="min-w-0">
           <div className="flex h-[42px] items-center px-3 text-xs font-medium text-slate-400">
-            Habit / Routine
+            Habits / Routine
           </div>
           <div className="divide-y divide-slate-800/60">
             {data.habits.map((habit) => (
