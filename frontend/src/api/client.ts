@@ -22,7 +22,8 @@ api.interceptors.request.use((config) => {
 
 // Handle 401 Unauthorized responses
 api.interceptors.response.use(
-  (response) => {           // global backend-message listener
+  (response) => {
+    // global backend-message listener
     const message = response.data?.message;
     if (typeof window !== "undefined" && typeof message === "string") {
       window.dispatchEvent(
@@ -32,6 +33,15 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    const errorMessage =
+      error.response?.data?.error?.message || error.response?.data?.error;
+    if (typeof window !== "undefined" && typeof errorMessage === "string") {
+      window.dispatchEvent(
+        new CustomEvent(TOAST_EVENT, {
+          detail: { message: errorMessage, type: "error" },
+        }),
+      );
+    }
     if (error.response?.status === 401) {
       authStorage.clear();
       // Only redirect if not already on the login page

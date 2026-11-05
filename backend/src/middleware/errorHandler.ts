@@ -35,13 +35,14 @@ export function errorHandler(
     err.message?.includes("ECONNREFUSED") ||
     err.message?.includes("Can't reach database") ||
     err.message?.includes("P1001") ||
-    err.message?.includes("P1002")
+    err.message?.includes("P1002") ||
+    err.message?.includes("Timed out fetching a new connection from the connection pool")
   ) {
     res.status(503).json({
       success: false,
       error: {
         code: "DB_CONNECTION_ERROR",
-        message: "The service is temporarily unavailable. Please try again later.",
+        message: "The database is temporarily busy. Please try again in a moment.",
       },
     });
     return;

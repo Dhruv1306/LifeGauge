@@ -138,11 +138,11 @@ export const HabitMatrix: React.FC<HabitMatrixProps> = ({
               Habit Matrix
             </h3>
             <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[11px] font-mono font-medium text-emerald-400 border border-emerald-500/20">
-              GitHub Style
+              GitHub
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Click the cell to toggle your routine completion for that day.
+            The mirror of Your Dedication.
           </p>
         </div>
 

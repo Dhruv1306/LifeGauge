@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { api } from "../../api/client";
-import {
-  CalendarEventData,
-  CalendarEventModal,
-} from "./CalendarEventModal";
+import { CalendarEventData, CalendarEventModal } from "./CalendarEventModal";
 import {
   ChevronLeft,
   ChevronRight,
@@ -15,7 +12,14 @@ import {
   Calendar as CalendarIcon,
 } from "lucide-react";
 
-export type CalendarViewMode = "day" | "4days" | "week" | "month" | "year" | "schedule";
+export type CalendarViewMode = "day" | "week" | "month" | "year" | "schedule";
+
+const formatLocalDateKey = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 interface GoogleCalendarViewProps {
   googleEmail?: string | null;
@@ -33,12 +37,19 @@ export const GoogleCalendarView: React.FC<GoogleCalendarViewProps> = ({
   const [events, setEvents] = useState<CalendarEventData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [requiresReauthorization, setRequiresReauthorization] = useState(false);
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalInitialDate, setModalInitialDate] = useState<string | undefined>(undefined);
-  const [modalInitialHour, setModalInitialHour] = useState<number | undefined>(undefined);
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEventData | null>(null);
+  const [modalInitialDate, setModalInitialDate] = useState<string | undefined>(
+    undefined,
+  );
+  const [modalInitialHour, setModalInitialHour] = useState<number | undefined>(
+    undefined,
+  );
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEventData | null>(
+    null,
+  );
 
   // Date calculation helpers
   const year = currentDate.getFullYear();
@@ -51,23 +62,35 @@ export const GoogleCalendarView: React.FC<GoogleCalendarViewProps> = ({
     let title = "";
 
     const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
 
     if (viewMode === "day") {
       start = new Date(year, month, currentDate.getDate(), 0, 0, 0);
       end = new Date(year, month, currentDate.getDate(), 23, 59, 59);
       title = `${monthNames[month]} ${currentDate.getDate()}, ${year}`;
-    } else if (viewMode === "4days") {
-      start = new Date(year, month, currentDate.getDate(), 0, 0, 0);
-      end = new Date(year, month, currentDate.getDate() + 3, 23, 59, 59);
-      const endMonth = end.getMonth();
-      title = `${monthNames[month].substring(0, 3)} ${start.getDate()} – ${monthNames[endMonth].substring(0, 3)} ${end.getDate()}, ${end.getFullYear()}`;
     } else if (viewMode === "week") {
       const dayOfWeek = currentDate.getDay(); // 0 (Sun) - 6 (Sat)
       start = new Date(year, month, currentDate.getDate() - dayOfWeek, 0, 0, 0);
-      end = new Date(year, month, currentDate.getDate() - dayOfWeek + 6, 23, 59, 59);
+      end = new Date(
+        year,
+        month,
+        currentDate.getDate() - dayOfWeek + 6,
+        23,
+        59,
+        59,
+      );
       const endMonth = end.getMonth();
       title = `${monthNames[month].substring(0, 3)} ${start.getDate()} – ${monthNames[endMonth].substring(0, 3)} ${end.getDate()}, ${end.getFullYear()}`;
     } else if (viewMode === "year") {
@@ -79,7 +102,14 @@ export const GoogleCalendarView: React.FC<GoogleCalendarViewProps> = ({
       const firstDay = new Date(year, month, 1);
       const lastDay = new Date(year, month + 1, 0);
       start = new Date(year, month, 1 - firstDay.getDay(), 0, 0, 0);
-      end = new Date(year, month, lastDay.getDate() + (6 - lastDay.getDay()), 23, 59, 59);
+      end = new Date(
+        year,
+        month,
+        lastDay.getDate() + (6 - lastDay.getDay()),
+        23,
+        59,
+        59,
+      );
       title = `${monthNames[month]} ${year}`;
     }
 
@@ -92,12 +122,20 @@ export const GoogleCalendarView: React.FC<GoogleCalendarViewProps> = ({
     try {
       const startIso = rangeStart.toISOString();
       const endIso = rangeEnd.toISOString();
-      const res = await api.get(`/calendar/events?start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}`);
+      const res = await api.get(
+        `/calendar/events?start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}`,
+      );
       if (res.data.success) {
         setEvents(res.data.events);
       }
     } catch (err) {
       console.error("Failed to fetch calendar events", err);
+      if (
+        (err as { response?: { data?: { error?: { code?: string } } } })
+          .response?.data?.error?.code === "CALENDAR_REAUTH_REQUIRED"
+      ) {
+        setRequiresReauthorization(true);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -112,11 +150,29 @@ export const GoogleCalendarView: React.FC<GoogleCalendarViewProps> = ({
     setIsSyncing(true);
     try {
       await api.post("/calendar/sync", { force: true });
+      setRequiresReauthorization(false);
       await fetchEvents();
     } catch (err) {
       console.error("Manual sync failed", err);
+      if (
+        (err as { response?: { data?: { error?: { code?: string } } } })
+          .response?.data?.error?.code === "CALENDAR_REAUTH_REQUIRED"
+      ) {
+        setRequiresReauthorization(true);
+      }
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const handleReauthorize = async () => {
+    try {
+      const response = await api.get("/calendar/google/auth-url");
+      if (response.data.success && response.data.authUrl) {
+        window.location.href = response.data.authUrl;
+      }
+    } catch (err) {
+      console.error("Failed to start Google Calendar reauthorization", err);
     }
   };
 
@@ -128,9 +184,9 @@ export const GoogleCalendarView: React.FC<GoogleCalendarViewProps> = ({
   const handlePrev = () => {
     const d = new Date(currentDate);
     if (viewMode === "day") d.setDate(d.getDate() - 1);
-    else if (viewMode === "4days") d.setDate(d.getDate() - 4);
     else if (viewMode === "week") d.setDate(d.getDate() - 7);
-    else if (viewMode === "month" || viewMode === "schedule") d.setMonth(d.getMonth() - 1);
+    else if (viewMode === "month" || viewMode === "schedule")
+      d.setMonth(d.getMonth() - 1);
     else if (viewMode === "year") d.setFullYear(d.getFullYear() - 1);
     setCurrentDate(d);
   };
@@ -138,9 +194,9 @@ export const GoogleCalendarView: React.FC<GoogleCalendarViewProps> = ({
   const handleNext = () => {
     const d = new Date(currentDate);
     if (viewMode === "day") d.setDate(d.getDate() + 1);
-    else if (viewMode === "4days") d.setDate(d.getDate() + 4);
     else if (viewMode === "week") d.setDate(d.getDate() + 7);
-    else if (viewMode === "month" || viewMode === "schedule") d.setMonth(d.getMonth() + 1);
+    else if (viewMode === "month" || viewMode === "schedule")
+      d.setMonth(d.getMonth() + 1);
     else if (viewMode === "year") d.setFullYear(d.getFullYear() + 1);
     setCurrentDate(d);
   };
@@ -200,7 +256,9 @@ export const GoogleCalendarView: React.FC<GoogleCalendarViewProps> = ({
         <div className="flex flex-wrap items-center gap-2">
           {/* View Mode Segmented Switcher */}
           <div className="flex rounded-xl bg-slate-950 p-1 border border-slate-800 text-xs">
-            {(["day", "4days", "week", "month", "year", "schedule"] as CalendarViewMode[]).map((mode) => (
+            {(
+              ["day", "week", "month", "year", "schedule"] as CalendarViewMode[]
+            ).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
@@ -210,7 +268,7 @@ export const GoogleCalendarView: React.FC<GoogleCalendarViewProps> = ({
                     : "text-slate-400 hover:text-slate-200"
                 }`}
               >
-                {mode === "4days" ? "4 Days" : mode}
+                {mode}
               </button>
             ))}
           </div>
@@ -222,13 +280,17 @@ export const GoogleCalendarView: React.FC<GoogleCalendarViewProps> = ({
             title="Sync with Google Calendar"
             className="flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-800/90 px-2.5 py-1.5 text-xs text-slate-300 hover:text-white hover:border-slate-600 transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin text-emerald-400" : ""}`} />
-            <span className="hidden sm:inline">{isSyncing ? "Syncing..." : "Sync"}</span>
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin text-emerald-400" : ""}`}
+            />
+            <span className="hidden sm:inline">
+              {isSyncing ? "Syncing..." : "Sync"}
+            </span>
           </button>
 
           {/* Create Event CTA */}
           <button
-            onClick={() => handleSlotClick(new Date().toISOString().substring(0, 10))}
+            onClick={() => handleSlotClick(formatLocalDateKey(new Date()))}
             className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 transition-colors shadow-md shadow-emerald-600/20"
           >
             <Plus className="h-4 w-4" />
@@ -251,13 +313,37 @@ export const GoogleCalendarView: React.FC<GoogleCalendarViewProps> = ({
         <div className="flex items-center justify-between text-[11px] text-slate-400 px-2">
           <span className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Connected as <strong className="text-slate-200">{googleEmail}</strong> (Primary Calendar)</span>
+            <span>
+              Connected as{" "}
+              <strong className="text-slate-200">{googleEmail}</strong> (Primary
+              Calendar)
+            </span>
           </span>
           {lastSyncedAt && (
             <span className="text-slate-500">
-              Last synced: {new Date(lastSyncedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              Last synced:{" "}
+              {new Date(lastSyncedAt).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </span>
           )}
+        </div>
+      )}
+
+      {requiresReauthorization && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200 sm:flex-row sm:items-center sm:justify-between">
+          <span>
+            Google Calendar permissions need updating before events can be
+            synchronized.
+          </span>
+          <button
+            type="button"
+            onClick={handleReauthorize}
+            className="rounded-xl bg-amber-500 px-3 py-1.5 font-semibold text-slate-950 hover:bg-amber-400"
+          >
+            Reconnect Google Calendar
+          </button>
         </div>
       )}
 
@@ -275,10 +361,10 @@ export const GoogleCalendarView: React.FC<GoogleCalendarViewProps> = ({
             onSlotClick={handleSlotClick}
             onEventClick={handleEventClick}
           />
-        ) : viewMode === "week" || viewMode === "4days" || viewMode === "day" ? (
+        ) : viewMode === "week" || viewMode === "day" ? (
           <TimeGridView
             currentDate={currentDate}
-            daysCount={viewMode === "day" ? 1 : viewMode === "4days" ? 4 : 7}
+            daysCount={viewMode === "day" ? 1 : 7}
             events={events}
             onSlotClick={handleSlotClick}
             onEventClick={handleEventClick}
@@ -296,7 +382,9 @@ export const GoogleCalendarView: React.FC<GoogleCalendarViewProps> = ({
           <ScheduleView
             events={events}
             onEventClick={handleEventClick}
-            onEmptyCreate={() => handleSlotClick(new Date().toISOString().substring(0, 10))}
+            onEmptyCreate={() =>
+              handleSlotClick(formatLocalDateKey(new Date()))
+            }
           />
         )}
       </div>
@@ -335,28 +423,43 @@ const MonthView: React.FC<MonthViewProps> = ({
   const month = currentDate.getMonth();
 
   const dayHeaders = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-  const todayStr = new Date().toISOString().substring(0, 10);
+  const todayStr = formatLocalDateKey(new Date());
 
   // Calculate calendar days matrix
   const calendarDays = useMemo(() => {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
 
-    const days: { date: Date; dateStr: string; isCurrentMonth: boolean; isToday: boolean }[] = [];
+    const days: {
+      date: Date;
+      dateStr: string;
+      isCurrentMonth: boolean;
+      isToday: boolean;
+    }[] = [];
 
     // Previous month padding
     const prevPadding = firstDay.getDay();
     for (let i = prevPadding - 1; i >= 0; i--) {
       const d = new Date(year, month, -i);
-      const str = d.toISOString().substring(0, 10);
-      days.push({ date: d, dateStr: str, isCurrentMonth: false, isToday: str === todayStr });
+      const str = formatLocalDateKey(d);
+      days.push({
+        date: d,
+        dateStr: str,
+        isCurrentMonth: false,
+        isToday: str === todayStr,
+      });
     }
 
     // Current month days
     for (let day = 1; day <= lastDay.getDate(); day++) {
       const d = new Date(year, month, day);
-      const str = d.toISOString().substring(0, 10);
-      days.push({ date: d, dateStr: str, isCurrentMonth: true, isToday: str === todayStr });
+      const str = formatLocalDateKey(d);
+      days.push({
+        date: d,
+        dateStr: str,
+        isCurrentMonth: true,
+        isToday: str === todayStr,
+      });
     }
 
     // Next month padding (complete the 6th row if needed, minimum 35 or 42 cells)
@@ -364,8 +467,13 @@ const MonthView: React.FC<MonthViewProps> = ({
     const remaining = totalCells - days.length;
     for (let i = 1; i <= remaining; i++) {
       const d = new Date(year, month + 1, i);
-      const str = d.toISOString().substring(0, 10);
-      days.push({ date: d, dateStr: str, isCurrentMonth: false, isToday: str === todayStr });
+      const str = formatLocalDateKey(d);
+      days.push({
+        date: d,
+        dateStr: str,
+        isCurrentMonth: false,
+        isToday: str === todayStr,
+      });
     }
 
     return days;
@@ -385,7 +493,10 @@ const MonthView: React.FC<MonthViewProps> = ({
         {calendarDays.map((cell) => {
           const dayEvents = events.filter((ev) => {
             if (ev.isAllDay) return ev.startDate === cell.dateStr;
-            if (ev.startTime) return new Date(ev.startTime).toISOString().substring(0, 10) === cell.dateStr;
+            if (ev.startTime)
+              return (
+                formatLocalDateKey(new Date(ev.startTime)) === cell.dateStr
+              );
             return false;
           });
 
@@ -394,7 +505,9 @@ const MonthView: React.FC<MonthViewProps> = ({
               key={cell.dateStr}
               onClick={() => onSlotClick(cell.dateStr)}
               className={`min-h-[105px] p-1.5 transition-colors cursor-pointer flex flex-col justify-between ${
-                cell.isCurrentMonth ? "bg-slate-900 hover:bg-slate-850" : "bg-slate-950/70 hover:bg-slate-900/60"
+                cell.isCurrentMonth
+                  ? "bg-slate-900 hover:bg-slate-850"
+                  : "bg-slate-950/70 hover:bg-slate-900/60"
               }`}
             >
               {/* Day Number Header */}
@@ -404,14 +517,16 @@ const MonthView: React.FC<MonthViewProps> = ({
                     cell.isToday
                       ? "bg-emerald-500 text-slate-950 font-bold"
                       : cell.isCurrentMonth
-                      ? "text-slate-200"
-                      : "text-slate-600"
+                        ? "text-slate-200"
+                        : "text-slate-600"
                   }`}
                 >
                   {cell.date.getDate()}
                 </span>
                 {dayEvents.length > 3 && (
-                  <span className="text-[10px] text-slate-500 font-mono">+{dayEvents.length - 3}</span>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    +{dayEvents.length - 3}
+                  </span>
                 )}
               </div>
 
@@ -426,7 +541,10 @@ const MonthView: React.FC<MonthViewProps> = ({
                   >
                     {!ev.isAllDay && ev.startTime && (
                       <span className="mr-1 text-[10px] opacity-75 font-mono">
-                        {new Date(ev.startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                        {new Date(ev.startTime).toLocaleTimeString([], {
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
                       </span>
                     )}
                     <span>{ev.title}</span>
@@ -442,7 +560,7 @@ const MonthView: React.FC<MonthViewProps> = ({
 };
 
 // ===========================================================================
-// SUBVIEW 2: TIME GRID VIEW (Day / 4 Days / Week with 24h vertical axis)
+// SUBVIEW 2: TIME GRID VIEW (Day / Week with 24h vertical axis)
 // ===========================================================================
 
 interface TimeGridViewProps {
@@ -461,141 +579,248 @@ const TimeGridView: React.FC<TimeGridViewProps> = ({
   onEventClick,
 }) => {
   const hours = Array.from({ length: 24 }, (_, i) => i);
-  const todayStr = new Date().toISOString().substring(0, 10);
+  const hourHeight = 64;
+  const timelineHeight = hours.length * hourHeight;
+  const todayStr = formatLocalDateKey(new Date());
 
-  // Compute the columns to display
   const columns = useMemo(() => {
-    const list: { date: Date; dateStr: string; label: string; isToday: boolean }[] = [];
+    const list: {
+      date: Date;
+      dateStr: string;
+      label: string;
+      isToday: boolean;
+    }[] = [];
     const base = new Date(currentDate);
-
-    // If week (7 days), start from Sunday
-    if (daysCount === 7) {
-      base.setDate(base.getDate() - base.getDay());
-    }
+    if (daysCount === 7) base.setDate(base.getDate() - base.getDay());
 
     const dayShorts = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
     for (let i = 0; i < daysCount; i++) {
-      const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i);
-      const str = d.toISOString().substring(0, 10);
+      const date = new Date(
+        base.getFullYear(),
+        base.getMonth(),
+        base.getDate() + i,
+      );
+      const dateStr = formatLocalDateKey(date);
       list.push({
-        date: d,
-        dateStr: str,
-        label: `${dayShorts[d.getDay()]} ${d.getDate()}`,
-        isToday: str === todayStr,
+        date,
+        dateStr,
+        label: `${dayShorts[date.getDay()]} ${date.getDate()}`,
+        isToday: dateStr === todayStr,
       });
     }
-
     return list;
   }, [currentDate, daysCount, todayStr]);
+
+  const getTimedEvents = (dateStr: string) =>
+    events.filter((event) => {
+      if (event.isAllDay || !event.startTime) return false;
+      return formatLocalDateKey(new Date(event.startTime)) === dateStr;
+    });
+
+  const layoutEvents = (dayEvents: CalendarEventData[]) => {
+    const sorted = [...dayEvents].sort(
+      (a, b) =>
+        new Date(a.startTime!).getTime() - new Date(b.startTime!).getTime(),
+    );
+    const active: Array<{ end: number; lane: number }> = [];
+    const positioned: Array<{
+      event: CalendarEventData;
+      lane: number;
+      laneCount: number;
+    }> = [];
+    let maxLane = 0;
+
+    for (const event of sorted) {
+      const start = new Date(event.startTime!).getTime();
+      const end = event.endTime
+        ? new Date(event.endTime).getTime()
+        : start + 60 * 60 * 1000;
+      for (let i = active.length - 1; i >= 0; i--) {
+        if (active[i].end <= start) active.splice(i, 1);
+      }
+      const usedLanes = new Set(active.map((item) => item.lane));
+      let lane = 0;
+      while (usedLanes.has(lane)) lane += 1;
+      active.push({ end, lane });
+      maxLane = Math.max(maxLane, lane + 1);
+      positioned.push({ event, lane, laneCount: 1 });
+    }
+
+    return positioned.map((item) => ({ ...item, laneCount: maxLane || 1 }));
+  };
 
   const now = new Date();
 
   return (
     <div className="overflow-x-auto">
-      <div className="min-w-[650px]">
-        {/* Column Headers */}
-        <div className="grid grid-cols-[60px_repeat(auto-fit,minmax(0,1fr))] border-b border-slate-800 pb-2 mb-2">
-          <div className="text-[11px] text-slate-500 text-center font-mono pt-1">GMT</div>
-          {columns.map((col) => (
-            <div key={col.dateStr} className="text-center">
+      <div className="min-w-[700px]">
+        <div
+          className="grid border-b border-slate-800 pb-2"
+          style={{
+            gridTemplateColumns: `64px repeat(${daysCount}, minmax(0, 1fr))`,
+          }}
+        >
+          <div className="pt-1 text-center text-[11px] font-mono text-slate-500">
+            Local
+          </div>
+          {columns.map((column) => (
+            <div
+              key={column.dateStr}
+              className="text-center text-xs font-semibold"
+            >
               <span
-                className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                  col.isToday ? "bg-emerald-500 text-slate-950 font-bold" : "text-slate-300"
-                }`}
+                className={
+                  column.isToday ? "text-emerald-300" : "text-slate-300"
+                }
               >
-                {col.label}
+                {column.label.split(" ")[0]}
+              </span>
+              <span
+                className={
+                  column.isToday
+                    ? "mx-auto mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-slate-950"
+                    : "block text-slate-400"
+                }
+              >
+                {column.label.split(" ")[1]}
               </span>
             </div>
           ))}
         </div>
 
-        {/* All-Day Events Row */}
-        <div className="grid grid-cols-[60px_repeat(auto-fit,minmax(0,1fr))] border-b border-slate-800 pb-2 mb-2">
-          <div className="text-[10px] text-slate-500 text-right pr-2 self-center">All-day</div>
-          {columns.map((col) => {
-            const allDayEvents = events.filter((ev) => ev.isAllDay && ev.startDate === col.dateStr);
-            return (
-              <div key={col.dateStr} className="px-1 space-y-1 min-h-[24px]">
-                {allDayEvents.map((ev) => (
-                  <div
-                    key={ev.id}
-                    onClick={(e) => onEventClick(ev, e)}
-                    className="truncate rounded bg-emerald-600/30 border border-emerald-500/50 px-2 py-0.5 text-[11px] font-medium text-emerald-300 cursor-pointer hover:bg-emerald-600/50 transition-colors"
+        <div
+          className="grid border-b border-slate-800 pb-2"
+          style={{
+            gridTemplateColumns: `64px repeat(${daysCount}, minmax(0, 1fr))`,
+          }}
+        >
+          <div className="self-center pr-2 text-right text-[10px] text-slate-500">
+            All-day
+          </div>
+          {columns.map((column) => (
+            <div key={column.dateStr} className="min-h-[28px] space-y-1 px-1">
+              {events
+                .filter(
+                  (event) =>
+                    event.isAllDay && event.startDate === column.dateStr,
+                )
+                .map((event) => (
+                  <button
+                    key={event.id}
+                    type="button"
+                    onClick={(e) => onEventClick(event, e)}
+                    className="w-full truncate rounded border border-emerald-500/50 bg-emerald-600/30 px-2 py-0.5 text-left text-[11px] font-medium text-emerald-300 hover:bg-emerald-600/50"
                   >
-                    {ev.title}
-                  </div>
+                    {event.title}
+                  </button>
                 ))}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* 24-Hour Time Grid */}
-        <div className="relative max-h-[580px] overflow-y-auto">
-          {hours.map((h) => (
-            <div
-              key={h}
-              className="grid grid-cols-[60px_repeat(auto-fit,minmax(0,1fr))] min-h-[48px] border-b border-slate-850"
-            >
-              {/* Hour Label */}
-              <div className="text-[11px] font-mono text-slate-500 text-right pr-3 -mt-2.5 select-none">
-                {h === 0 ? "12 AM" : h < 12 ? `${h} AM` : h === 12 ? "12 PM" : `${h - 12} PM`}
-              </div>
-
-              {/* Day Slots */}
-              {columns.map((col) => {
-                // Find timed events that start in this hour slot
-                const slotEvents = events.filter((ev) => {
-                  if (ev.isAllDay || !ev.startTime) return false;
-                  const st = new Date(ev.startTime);
-                  const evDate = st.toISOString().substring(0, 10);
-                  return evDate === col.dateStr && st.getHours() === h;
-                });
-
-                return (
-                  <div
-                    key={col.dateStr}
-                    onClick={() => onSlotClick(col.dateStr, h)}
-                    className="border-l border-slate-800/60 p-1 hover:bg-slate-800/30 transition-colors cursor-pointer relative"
-                  >
-                    {/* Event Blocks */}
-                    {slotEvents.map((ev) => {
-                      const st = new Date(ev.startTime!);
-                      const et = ev.endTime ? new Date(ev.endTime) : new Date(st.getTime() + 60 * 60 * 1000);
-                      const durMin = Math.max(20, Math.round((et.getTime() - st.getTime()) / 60000));
-
-                      return (
-                        <div
-                          key={ev.id}
-                          onClick={(e) => onEventClick(ev, e)}
-                          className="rounded-lg bg-emerald-500/20 border border-emerald-500/40 p-1 text-[11px] text-white hover:bg-emerald-500/30 transition-colors shadow-sm mb-1 overflow-hidden"
-                          style={{ minHeight: `${Math.min(100, Math.max(30, durMin * 0.7))}px` }}
-                        >
-                          <div className="font-semibold text-emerald-300 truncate">{ev.title}</div>
-                          <div className="text-[10px] text-slate-400 font-mono truncate">
-                            {st.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
-                            {ev.endTime && ` – ${new Date(ev.endTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`}
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                    {/* Red line indicator if today */}
-                    {col.isToday && h === now.getHours() && (
-                      <div
-                        className="absolute left-0 right-0 z-20 pointer-events-none flex items-center"
-                        style={{ top: `${(now.getMinutes() / 60) * 100}%` }}
-                      >
-                        <div className="h-2 w-2 rounded-full bg-rose-500 -ml-1" />
-                        <div className="h-[2px] w-full bg-rose-500 shadow-sm" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
             </div>
           ))}
+        </div>
+
+        <div className="max-h-[580px] overflow-y-auto">
+          <div
+            className="grid"
+            style={{
+              gridTemplateColumns: `64px repeat(${daysCount}, minmax(0, 1fr))`,
+              height: `${timelineHeight}px`,
+            }}
+          >
+            <div className="relative border-r border-slate-800/60">
+              {hours.map((hour) => (
+                <div
+                  key={hour}
+                  className="absolute right-3 -translate-y-1/2 text-[11px] font-mono text-slate-500"
+                  style={{ top: `${hour * hourHeight}px` }}
+                >
+                  {hour === 0
+                    ? "12 AM"
+                    : hour < 12
+                      ? `${hour} AM`
+                      : hour === 12
+                        ? "12 PM"
+                        : `${hour - 12} PM`}
+                </div>
+              ))}
+            </div>
+
+            {columns.map((column) => {
+              const positioned = layoutEvents(getTimedEvents(column.dateStr));
+              return (
+                <div
+                  key={column.dateStr}
+                  className="relative border-l border-slate-800/60"
+                  onClick={(event) => {
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    const minutes = Math.max(
+                      0,
+                      Math.floor(
+                        ((event.clientY - rect.top) / hourHeight) * 60,
+                      ),
+                    );
+                    onSlotClick(column.dateStr, Math.floor(minutes / 60));
+                  }}
+                  style={{
+                    backgroundImage:
+                      "repeating-linear-gradient(to bottom, transparent 0, transparent 63px, rgba(51, 65, 85, 0.7) 63px, rgba(51, 65, 85, 0.7) 64px)",
+                  }}
+                >
+                  {positioned.map(({ event, lane, laneCount }) => {
+                    const start = new Date(event.startTime!);
+                    const end = event.endTime
+                      ? new Date(event.endTime)
+                      : new Date(start.getTime() + 60 * 60 * 1000);
+                    const startMinutes =
+                      start.getHours() * 60 + start.getMinutes();
+                    const durationMinutes = Math.max(
+                      20,
+                      Math.round((end.getTime() - start.getTime()) / 60000),
+                    );
+                    const gap = 4;
+
+                    return (
+                      <button
+                        key={event.id}
+                        type="button"
+                        onClick={(e) => onEventClick(event, e)}
+                        className="absolute z-10 overflow-hidden rounded-lg border border-emerald-500/40 bg-emerald-500/20 p-2 text-left text-[11px] text-white shadow-sm hover:bg-emerald-500/30"
+                        style={{
+                          top: `${(startMinutes / 60) * hourHeight + 2}px`,
+                          height: `${Math.max(32, (durationMinutes / 60) * hourHeight - 4)}px`,
+                          left: `calc(${(lane * 100) / laneCount}% + ${gap / 2}px)`,
+                          width: `calc(${100 / laneCount}% - ${gap}px)`,
+                        }}
+                      >
+                        <div className="truncate font-semibold text-emerald-300">
+                          {event.title}
+                        </div>
+                        <div className="truncate font-mono text-[10px] text-slate-400">
+                          {start.toLocaleTimeString([], {
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })}
+                          {event.endTime &&
+                            ` - ${end.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`}
+                        </div>
+                      </button>
+                    );
+                  })}
+
+                  {column.isToday && now.getHours() >= 0 && (
+                    <div
+                      className="pointer-events-none absolute left-0 right-0 z-20 flex items-center"
+                      style={{
+                        top: `${((now.getHours() * 60 + now.getMinutes()) / 60) * hourHeight}px`,
+                      }}
+                    >
+                      <div className="-ml-1 h-2 w-2 rounded-full bg-rose-500" />
+                      <div className="h-[2px] w-full bg-rose-500 shadow-sm" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
@@ -612,12 +837,26 @@ interface YearViewProps {
   onSelectDate: (date: Date) => void;
 }
 
-const YearView: React.FC<YearViewProps> = ({ currentDate, events, onSelectDate }) => {
+const YearView: React.FC<YearViewProps> = ({
+  currentDate,
+  events,
+  onSelectDate,
+}) => {
   const year = currentDate.getFullYear();
   const months = Array.from({ length: 12 }, (_, i) => i);
   const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   return (
@@ -628,8 +867,13 @@ const YearView: React.FC<YearViewProps> = ({ currentDate, events, onSelectDate }
         const padding = firstDay.getDay();
 
         return (
-          <div key={m} className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-            <h4 className="text-xs font-bold text-white text-center mb-2">{monthNames[m]}</h4>
+          <div
+            key={m}
+            className="rounded-xl border border-slate-800 bg-slate-950/60 p-3"
+          >
+            <h4 className="text-xs font-bold text-white text-center mb-2">
+              {monthNames[m]}
+            </h4>
             <div className="grid grid-cols-7 text-[10px] font-mono text-slate-500 text-center mb-1">
               {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
                 <div key={i}>{d}</div>
@@ -639,29 +883,32 @@ const YearView: React.FC<YearViewProps> = ({ currentDate, events, onSelectDate }
               {Array.from({ length: padding }).map((_, i) => (
                 <div key={`pad-${i}`} />
               ))}
-              {Array.from({ length: lastDay.getDate() }, (_, i) => i + 1).map((d) => {
-                const dateObj = new Date(year, m, d);
-                const str = dateObj.toISOString().substring(0, 10);
-                const hasEvents = events.some((ev) => {
-                  if (ev.isAllDay) return ev.startDate === str;
-                  if (ev.startTime) return new Date(ev.startTime).toISOString().substring(0, 10) === str;
-                  return false;
-                });
+              {Array.from({ length: lastDay.getDate() }, (_, i) => i + 1).map(
+                (d) => {
+                  const dateObj = new Date(year, m, d);
+                  const str = formatLocalDateKey(dateObj);
+                  const hasEvents = events.some((ev) => {
+                    if (ev.isAllDay) return ev.startDate === str;
+                    if (ev.startTime)
+                      return formatLocalDateKey(new Date(ev.startTime)) === str;
+                    return false;
+                  });
 
-                return (
-                  <button
-                    key={d}
-                    onClick={() => onSelectDate(dateObj)}
-                    className={`h-6 w-6 mx-auto rounded-full flex items-center justify-center transition-all ${
-                      hasEvents
-                        ? "bg-emerald-500/30 text-emerald-300 font-bold hover:bg-emerald-500 hover:text-slate-950"
-                        : "text-slate-300 hover:bg-slate-800"
-                    }`}
-                  >
-                    {d}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={d}
+                      onClick={() => onSelectDate(dateObj)}
+                      className={`h-6 w-6 mx-auto rounded-full flex items-center justify-center transition-all ${
+                        hasEvents
+                          ? "bg-emerald-500/30 text-emerald-300 font-bold hover:bg-emerald-500 hover:text-slate-950"
+                          : "text-slate-300 hover:bg-slate-800"
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  );
+                },
+              )}
             </div>
           </div>
         );
@@ -680,12 +927,20 @@ interface ScheduleViewProps {
   onEmptyCreate: () => void;
 }
 
-const ScheduleView: React.FC<ScheduleViewProps> = ({ events, onEventClick, onEmptyCreate }) => {
+const ScheduleView: React.FC<ScheduleViewProps> = ({
+  events,
+  onEventClick,
+  onEmptyCreate,
+}) => {
   // Sort events chronologically
   const sortedEvents = useMemo(() => {
     return [...events].sort((a, b) => {
-      const aTime = a.startTime ? new Date(a.startTime).getTime() : new Date(`${a.startDate}T00:00:00`).getTime();
-      const bTime = b.startTime ? new Date(b.startTime).getTime() : new Date(`${b.startDate}T00:00:00`).getTime();
+      const aTime = a.startTime
+        ? new Date(a.startTime).getTime()
+        : new Date(`${a.startDate}T00:00:00`).getTime();
+      const bTime = b.startTime
+        ? new Date(b.startTime).getTime()
+        : new Date(`${b.startDate}T00:00:00`).getTime();
       return aTime - bTime;
     });
   }, [events]);
@@ -709,11 +964,16 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ events, onEventClick, onEmp
   return (
     <div className="divide-y divide-slate-800/80 max-h-[600px] overflow-y-auto">
       {sortedEvents.map((ev) => {
-        const dateStr = ev.isAllDay && ev.startDate
-          ? ev.startDate
-          : ev.startTime
-          ? new Date(ev.startTime).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })
-          : "";
+        const dateStr =
+          ev.isAllDay && ev.startDate
+            ? ev.startDate
+            : ev.startTime
+              ? new Date(ev.startTime).toLocaleDateString([], {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                })
+              : "";
 
         return (
           <div
@@ -740,7 +1000,11 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ events, onEventClick, onEmp
                   {!ev.isAllDay && ev.startTime && (
                     <span>
                       {" "}
-                      at {new Date(ev.startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                      at{" "}
+                      {new Date(ev.startTime).toLocaleTimeString([], {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
                     </span>
                   )}
                 </span>
@@ -753,7 +1017,9 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ events, onEventClick, onEmp
               </div>
 
               {ev.description && (
-                <p className="text-xs text-slate-400 line-clamp-2 max-w-xl">{ev.description}</p>
+                <p className="text-xs text-slate-400 line-clamp-2 max-w-xl">
+                  {ev.description}
+                </p>
               )}
             </div>
           </div>

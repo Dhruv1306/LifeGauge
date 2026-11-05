@@ -139,10 +139,17 @@ export async function handleOAuthCallback(
 ): Promise<string> {
   const userId = validateOAuthState(state);
   const oauth2Client = createOAuth2Client();
+  const existingToken = await prisma.googleCalendarToken.findUnique({
+    where: { userId },
+  });
 
   const { tokens } = await oauth2Client.getToken(code);
 
-  if (!tokens.refresh_token) {
+  const refreshToken =
+    tokens.refresh_token ??
+    (existingToken ? decryptToken(existingToken.encryptedRefreshToken) : null);
+
+  if (!refreshToken) {
     throw new Error(
       "Google did not return a refresh token. Please disconnect and reconnect to grant offline access.",
     );
@@ -163,7 +170,9 @@ export async function handleOAuthCallback(
     );
   }
 
-  const encryptedRefreshToken = encryptToken(tokens.refresh_token);
+  const encryptedRefreshToken = tokens.refresh_token
+    ? encryptToken(tokens.refresh_token)
+    : existingToken!.encryptedRefreshToken;
 
   await prisma.googleCalendarToken.upsert({
     where: { userId },
@@ -182,6 +191,31 @@ export async function handleOAuthCallback(
   });
 
   return userId;
+}
+
+export class CalendarReauthorizationRequiredError extends Error {
+  readonly code = "CALENDAR_REAUTH_REQUIRED";
+
+  constructor() {
+    super(
+      "Google Calendar permissions need updating. Reconnect your Google account to continue syncing.",
+    );
+    this.name = "CalendarReauthorizationRequiredError";
+  }
+}
+
+function isInsufficientScopeError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const candidate = error as {
+    code?: number;
+    message?: string;
+    response?: { data?: { error?: string } };
+  };
+  const message = [candidate.message, candidate.response?.data?.error]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return candidate.code === 403 && message.includes("scope");
 }
 
 /**
@@ -329,6 +363,8 @@ export async function syncCalendarEvents(
       syncedCount = result.synced;
       deletedCount = result.deleted;
       newSyncToken = result.nextSyncToken;
+    } else if (isInsufficientScopeError(err)) {
+      throw new CalendarReauthorizationRequiredError();
     } else {
       throw err;
     }

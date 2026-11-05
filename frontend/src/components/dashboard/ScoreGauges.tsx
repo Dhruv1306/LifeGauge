@@ -62,7 +62,7 @@ export const ScoreGauges: React.FC<ScoreGaugesProps> = ({ metrics, delta, onOpen
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
       {/* 1. Main Unified Daily Score Cockpit Card */}
-      <div className="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 p-5 shadow-xl md:col-span-1 relative overflow-hidden">
+      <div className="daily-gauge-card rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 p-5 shadow-xl md:col-span-1 relative overflow-hidden">
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
             <Gauge className="h-4 w-4 text-emerald-400" />

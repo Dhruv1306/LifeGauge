@@ -1,12 +1,21 @@
 import React, { useState } from "react";
 import { api } from "../../api/client";
-import { Calendar, ShieldCheck, ArrowRight, RefreshCw, AlertCircle, Sparkles } from "lucide-react";
+import {
+  Calendar,
+  ShieldCheck,
+  ArrowRight,
+  RefreshCw,
+  AlertCircle,
+  Sparkles,
+} from "lucide-react";
 
 interface GoogleCalendarConnectProps {
   onConnected?: () => void;
 }
 
-export const GoogleCalendarConnect: React.FC<GoogleCalendarConnectProps> = () => {
+export const GoogleCalendarConnect: React.FC<
+  GoogleCalendarConnectProps
+> = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -24,7 +33,8 @@ export const GoogleCalendarConnect: React.FC<GoogleCalendarConnectProps> = () =>
     } catch (err: unknown) {
       const msg =
         err && typeof err === "object" && "response" in err
-          ? (err as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message
+          ? (err as { response?: { data?: { error?: { message?: string } } } })
+              .response?.data?.error?.message
           : "Failed to connect to Google Calendar. Ensure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are configured.";
       setErrorMsg(msg || "Failed to initiate Google authorization.");
     } finally {
@@ -51,8 +61,9 @@ export const GoogleCalendarConnect: React.FC<GoogleCalendarConnectProps> = () =>
             Connect Your Primary Google Calendar
           </h2>
           <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed">
-            Manage your daily events directly within LifeGauge. Any event you create, modify, or delete in
-            LifeGauge or on your mobile Google Calendar stays bidirectionally in sync.
+            Manage your daily events directly within LifeGauge. Any event you
+            create, modify, or delete in LifeGauge or on your mobile Google
+            Calendar stays bidirectionally in sync.
           </p>
         </div>
 
@@ -65,18 +76,28 @@ export const GoogleCalendarConnect: React.FC<GoogleCalendarConnectProps> = () =>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left pt-2">
           <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
-            <div className="text-xs font-bold text-white mb-1">Interactive Views</div>
-            <div className="text-[11px] text-slate-400">Day, 4 Days, Week, Month, Year & Schedule agenda views.</div>
+            <div className="text-xs font-bold text-white mb-1">
+              Interactive Views
+            </div>
+            <div className="text-[11px] text-slate-400">
+              Day, Week, Month, Year & Schedule agenda views.
+            </div>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
-            <div className="text-xs font-bold text-white mb-1">Two-Way Sync</div>
-            <div className="text-[11px] text-slate-400">Edits on your phone reflect in LifeGauge and vice-versa.</div>
+            <div className="text-xs font-bold text-white mb-1">
+              Two-Way Sync
+            </div>
+            <div className="text-[11px] text-slate-400">
+              Edits on your phone reflect in LifeGauge and vice-versa.
+            </div>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
             <div className="text-xs font-bold text-white mb-1 flex items-center gap-1">
               <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> Isolated
             </div>
-            <div className="text-[11px] text-slate-400">Calendar events never pollute or alter productivity scores.</div>
+            <div className="text-[11px] text-slate-400">
+              Calendar events never pollute or alter productivity scores.
+            </div>
           </div>
         </div>
 
@@ -101,7 +122,8 @@ export const GoogleCalendarConnect: React.FC<GoogleCalendarConnectProps> = () =>
         </div>
 
         <p className="text-[11px] text-slate-500">
-          We use Google OAuth 2.0 with minimal calendar permissions. Tokens are encrypted at rest with AES-256.
+          We use Google OAuth 2.0 with minimal calendar permissions. Tokens are
+          encrypted at rest with AES-256.
         </p>
       </div>
     </div>
