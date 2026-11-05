@@ -167,7 +167,7 @@ export const TasksPage: React.FC = () => {
                 key={task.id}
                 className={`flex items-start justify-between p-4 rounded-2xl border transition-all ${
                   task.isCompleted
-                    ? "bg-slate-900/30 border-slate-800/50 opacity-60"
+                    ? "bg-slate-900/80 border-slate-800"
                     : "bg-slate-900/80 border-slate-800 hover:border-slate-700"
                 }`}
               >

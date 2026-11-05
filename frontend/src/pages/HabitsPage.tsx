@@ -119,8 +119,7 @@ export const HabitsPage: React.FC = () => {
               Habits & Consistency Matrix
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Build daily momentum and review your routines on the LeetCode /
-              GitHub style punchcard grid.
+              Build daily momentum and review your routines on the punchcard grid.
             </p>
           </div>
 

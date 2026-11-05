@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { ThemeDropdown } from "./ThemeDropdown";
+import { FullscreenToggle } from "./FullscreenToggle";
 import { WeightsModal } from "./WeightsModal";
 import {
   Gauge,
@@ -36,8 +37,8 @@ export const Navbar: React.FC = () => {
               <Gauge className="h-5 w-5 text-slate-950" />
             </div>
             <div className="flex flex-col">
-              <span className="text-lg font-bold tracking-tight text-[var(--text-primary)] flex items-center gap-1.5">
-                Life<span className="text-emerald-600 dark:text-emerald-400 font-extrabold">Gauge</span>
+              <span className="text-lg font-bold tracking-tight text-[var(--text-primary)] flex items-center">
+                Life<span className="text-emerald-600 dark:text-emerald-400 font-bold">Gauge</span>
               </span>
               <span className="text-[10px] uppercase font-mono tracking-widest text-[var(--text-muted)] -mt-1">
                 Analytics Cockpit
@@ -70,6 +71,7 @@ export const Navbar: React.FC = () => {
           {/* Right side: Theme toggle, Weights, User, Logout */}
           <div className="flex items-center gap-2">
             {/* Theme Dropdown — always visible */}
+            <FullscreenToggle />
             <ThemeDropdown />
 
             {/* Only show Weights/User/Logout when authenticated */}

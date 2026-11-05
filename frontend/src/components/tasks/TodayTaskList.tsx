@@ -55,7 +55,7 @@ export const TodayTaskList: React.FC<TodayTaskListProps> = ({
         </div>
         <button
           onClick={onOpenCreate}
-          className="flex items-center gap-1 rounded-xl bg-cyan-600/20 border border-cyan-500/30 px-3 py-1 text-xs font-medium text-cyan-300 hover:bg-cyan-600/30 transition-colors"
+          className="flex items-center gap-1 rounded-xl bg-cyan-600 border border-cyan-700 px-3 py-1 text-xs font-semibold text-white hover:bg-cyan-500 transition-colors shadow-sm shadow-cyan-600/20 dark:bg-cyan-600/20 dark:border-cyan-500/30 dark:text-cyan-300 dark:hover:bg-cyan-600/30"
         >
           <Plus className="h-3.5 w-3.5" />
           <span>New Task</span>
@@ -74,7 +74,7 @@ export const TodayTaskList: React.FC<TodayTaskListProps> = ({
               onClick={() => handleToggle(task)}
               className={`flex items-start justify-between p-3 rounded-xl border transition-all cursor-pointer ${
                 task.isCompleted
-                  ? "bg-slate-900/40 border-slate-800/60 opacity-60"
+                  ? "bg-slate-800/40 border-slate-800"
                   : "bg-slate-800/40 border-slate-800 hover:border-slate-700"
               }`}
             >

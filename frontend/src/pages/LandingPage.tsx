@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { ThemeDropdown } from "../components/common/ThemeDropdown";
+import { FullscreenToggle } from "../components/common/FullscreenToggle";
 import {
   Gauge,
   ArrowRight,
@@ -20,25 +21,31 @@ export const LandingPage: React.FC = () => {
       <header className="sticky top-0 z-50 border-b border-olive-200 dark:border-slate-800/80 bg-olive-50/90 dark:bg-slate-950/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-olive-600 to-olive-800 dark:from-emerald-400 dark:to-emerald-600 shadow-md shadow-olive-600/20 dark:shadow-emerald-500/20">
-              <Gauge className="h-5 w-5 text-white dark:text-slate-950" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-md shadow-emerald-500/20">
+              <Gauge className="h-5 w-5 text-slate-950" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-olive-900 dark:text-white">
-              Life<span className="text-olive-600 dark:text-emerald-400">Gauge</span>
-            </span>
+            <div className="flex flex-col">
+              <span className="text-lg font-bold tracking-tight text-[var(--text-primary)] flex items-center">
+                Life<span className="text-emerald-600 dark:text-emerald-400 font-bold">Gauge</span>
+              </span>
+              {/* <span className="text-[10px] uppercase font-mono tracking-widest text-[var(--text-muted)] -mt-1">
+                Analytics Cockpit
+              </span> */}
+            </div>
           </Link>
 
           <div className="flex items-center gap-3">
+            <FullscreenToggle />
             <ThemeDropdown />
             <Link
               to="/login"
-              className="rounded-xl border border-olive-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 px-4 py-2 text-xs font-semibold text-olive-800 dark:text-slate-300 hover:border-olive-300 dark:hover:border-slate-700 hover:text-olive-900 dark:hover:text-white transition-all shadow-sm"
+              className="rounded-xl border border-olive-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 px-4 py-2 text-xs font-semibold text-olive-800 dark:text-slate-200 hover:border-olive-300 dark:hover:border-slate-700 hover:bg-olive-100 dark:hover:bg-slate-800 transition-all shadow-sm"
             >
               Sign In
             </Link>
             <Link
               to="/register"
-              className="flex items-center gap-1.5 rounded-xl bg-olive-600 hover:bg-olive-700 dark:bg-gradient-to-r dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 text-white dark:text-slate-950 px-4 py-2 text-xs font-semibold transition-all shadow-md shadow-olive-600/20 dark:shadow-emerald-500/20"
+              className="flex items-center gap-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 dark:bg-gradient-to-r dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 text-white dark:text-slate-950 px-4 py-2 text-xs font-semibold transition-all shadow-md shadow-emerald-500/20 dark:shadow-emerald-500/20"
             >
               <span>Get Started</span>
               <ArrowRight className="h-3.5 w-3.5" />
@@ -61,7 +68,7 @@ export const LandingPage: React.FC = () => {
 
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-olive-900 dark:text-white leading-tight">
             Understand where your time went.{" "}
-            <span className="bg-gradient-to-r from-olive-600 via-olive-700 to-olive-900 dark:from-emerald-400 dark:via-teal-300 dark:to-cyan-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 dark:from-emerald-400 dark:via-teal-300 dark:to-cyan-400 bg-clip-text text-transparent">
               Track growth transparently.
             </span>
           </h1>
@@ -74,7 +81,7 @@ export const LandingPage: React.FC = () => {
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               to="/register"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-2xl bg-olive-600 hover:bg-olive-700 dark:bg-gradient-to-r dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 px-8 py-3.5 text-sm font-bold text-white dark:text-slate-950 shadow-xl shadow-olive-600/25 dark:shadow-emerald-500/25 transition-all hover:scale-[1.02]"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 dark:bg-gradient-to-r dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 px-8 py-3.5 text-sm font-bold text-white dark:text-slate-950 shadow-xl shadow-emerald-500/25 dark:shadow-emerald-500/25 transition-all hover:scale-[1.02]"
             >
               <span>Create Free Account</span>
               <ArrowRight className="h-4 w-4" />
@@ -235,14 +242,14 @@ export const LandingPage: React.FC = () => {
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 to="/register"
-                className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-olive-600 hover:bg-olive-700 dark:bg-gradient-to-r dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 px-6 py-3 text-sm font-semibold text-white dark:text-slate-950 shadow-lg shadow-olive-600/20 dark:shadow-emerald-500/20 transition-all"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 dark:bg-gradient-to-r dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 px-6 py-3 text-sm font-semibold text-white dark:text-slate-950 shadow-lg shadow-emerald-500/20 dark:shadow-emerald-500/20 transition-all"
               >
                 <span>Get Started Now</span>
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 to="/login"
-                className="w-full sm:w-auto rounded-xl border border-olive-200 dark:border-slate-800 bg-olive-50 dark:bg-slate-800/80 px-6 py-3 text-sm font-semibold text-olive-800 dark:text-slate-300 hover:text-olive-900 dark:hover:text-white transition-all shadow-sm"
+                className="w-full sm:w-auto rounded-xl border border-olive-200 dark:border-slate-800 bg-olive-50 dark:bg-slate-800/80 px-6 py-3 text-sm font-semibold text-olive-800 dark:text-slate-300 transition-all shadow-sm hover:border-olive-300 dark:hover:border-slate-700 hover:bg-olive-100 dark:hover:bg-slate-800"
               >
                 Sign In
               </Link>

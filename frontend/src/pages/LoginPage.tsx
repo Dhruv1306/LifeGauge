@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { ThemeDropdown } from "../components/common/ThemeDropdown";
+import { FullscreenToggle } from "../components/common/FullscreenToggle";
 import { Gauge, ArrowRight, Lock, Mail, ArrowLeft } from "lucide-react";
 
 export const LoginPage: React.FC = () => {
@@ -85,16 +86,19 @@ export const LoginPage: React.FC = () => {
             <ArrowLeft className="h-3.5 w-3.5" />
             <span>Back to LifeGauge</span>
           </Link>
-          <ThemeDropdown />
+          <div className="flex items-center gap-2">
+            <FullscreenToggle />
+            <ThemeDropdown />
+          </div>
         </div>
 
         {/* Brand header */}
         <div className="text-center mb-6">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-olive-600 to-olive-800 dark:from-emerald-400 dark:to-emerald-600 shadow-lg shadow-olive-600/25 dark:shadow-emerald-500/25 mb-3">
-            <Gauge className="h-7 w-7 text-white dark:text-slate-950" />
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-lg shadow-emerald-500/25 mb-3">
+            <Gauge className="h-7 w-7 text-slate-950" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-olive-900 dark:text-white flex items-center justify-center gap-1.5">
-            Life<span className="text-olive-600 dark:text-emerald-400">Gauge</span>
+            Life<span className="text-emerald-600 dark:text-emerald-400">Gauge</span>
           </h1>
           <p className="text-xs text-olive-600 dark:text-slate-400 mt-1">
             Sign in to access your personal analytics cockpit
@@ -143,7 +147,7 @@ export const LoginPage: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full mt-2 flex items-center justify-center gap-2 rounded-xl bg-olive-600 hover:bg-olive-700 dark:bg-gradient-to-r dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 py-3 text-sm font-semibold text-white dark:text-slate-950 transition-all shadow-lg shadow-olive-600/20 dark:shadow-emerald-500/20 disabled:opacity-50"
+            className="w-full mt-2 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 dark:bg-gradient-to-r dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 py-3 text-sm font-semibold text-white dark:text-slate-950 transition-all shadow-lg shadow-emerald-500/20 dark:shadow-emerald-500/20 disabled:opacity-50"
           >
             <span>{isSubmitting ? "Authenticating..." : "Access Cockpit"}</span>
             <ArrowRight className="h-4 w-4" />
@@ -152,7 +156,7 @@ export const LoginPage: React.FC = () => {
 
         <div className="mt-6 text-center text-xs text-olive-600 dark:text-slate-400">
           Don&apos;t have an account?{" "}
-          <Link to="/register" className="font-semibold text-olive-800 dark:text-emerald-400 hover:underline transition-colors">
+          <Link to="/register" className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline transition-colors">
             Register here
           </Link>
         </div>

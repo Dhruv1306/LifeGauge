@@ -114,6 +114,13 @@ html:not(.dark) .bg-slate-800\/50 {
   background-color: var(--bg-surface-2) !important;
 }
 
+/* Keep the light dashboard cards on the same surface while retaining the
+   dark cockpit treatment when the dark theme is active. */
+html:not(.dark) .daily-gauge-card {
+  background: var(--bg-surface) !important;
+  border-color: var(--border) !important;
+}
+
 html:not(.dark) .border-slate-800,
 html:not(.dark) .border-slate-800\/80,
 html:not(.dark) .border-slate-800\/60,
@@ -181,4 +188,41 @@ html:not(.dark) textarea::placeholder {
 @keyframes lifegauge-toast-progress {
   from { transform: scaleX(1); }
   to   { transform: scaleX(0); }
+}
+
+@layer components {
+  .landing-signin-hover {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .landing-signin-hover::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(120deg, rgba(16, 185, 129, 0.18), rgba(20, 184, 166, 0.12));
+    opacity: 0;
+    transform: translateX(-8%);
+    transition: opacity 220ms ease, transform 220ms ease;
+  }
+
+  .landing-signin-hover:hover {
+    border-color: rgb(52 211 153 / 0.55);
+    background-color: rgb(236 253 245);
+    color: rgb(6 95 70);
+    box-shadow: 0 12px 28px rgb(16 185 129 / 0.16);
+    transform: translateY(-1px);
+  }
+
+  .landing-signin-hover:hover::before {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .dark .landing-signin-hover:hover {
+    background-color: rgb(15 23 42 / 0.9);
+    color: rgb(167 243 208);
+  }
 }
