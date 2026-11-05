@@ -191,6 +191,130 @@ html:not(.dark) textarea::placeholder {
 }
 
 @layer components {
+  html:not(.dark) .frequency-option:not(.is-selected) {
+    background-color: var(--bg-surface) !important;
+    border-color: var(--border-strong) !important;
+    color: var(--text-secondary) !important;
+  }
+
+  html:not(.dark) .frequency-option:not(.is-selected):hover {
+    background-color: var(--bg-surface-hover) !important;
+    color: var(--text-primary) !important;
+  }
+
+  html:not(.dark) .frequency-option.is-selected {
+    background-color: #f4a261 !important;
+    border-color: #e76f51 !important;
+    color: var(--text-primary) !important;
+  }
+
+  html:not(.dark) .task-cancel-button:hover {
+    background-color: #e0f2fe !important;
+    border-color: #7dd3fc !important;
+    color: #0369a1 !important;
+  }
+
+  html:not(.dark) .habit-cancel-button:hover {
+    background-color: #ffedd5 !important;
+    border-color: #fdba74 !important;
+    color: #c2410c !important;
+  }
+
+  html:not(.dark) .focus-cancel-button:hover {
+    background-color: #dcfce7 !important;
+    border-color: #86efac !important;
+    color: #15803d !important;
+  }
+
+  html:not(.dark) .modal-close-button:hover {
+    background-color: #fee2e2 !important;
+    color: #dc2626 !important;
+  }
+
+  html:not(.dark) .habit-matrix-cell.matrix-completed {
+    color: #ffffff !important;
+  }
+
+  html:not(.dark) .habit-matrix-cell.matrix-missed {
+    background-color: #ffffff !important;
+    border-color: transparent !important;
+    color: #ef4444 !important;
+  }
+
+  html:not(.dark) .habit-matrix-rest {
+    background-color: transparent !important;
+    border-color: transparent !important;
+    color: #64748b !important;
+  }
+
+  html:not(.dark) .habit-matrix-row:hover {
+    background-color: rgba(148, 163, 184, 0.06) !important;
+  }
+
+  html:not(.dark) .configured-habit-row:hover {
+    background-color: rgba(148, 163, 184, 0.06) !important;
+  }
+
+  html:not(.dark) .task-row {
+    background-color: var(--bg-surface) !important;
+    border-color: var(--border) !important;
+  }
+
+  html:not(.dark) .task-row:hover {
+    border-color: var(--border-strong) !important;
+  }
+
+  html:not(.dark) .task-empty-state {
+    background-color: var(--bg-surface) !important;
+  }
+
+  html:not(.dark) .action-toast {
+    background-color: rgba(255, 255, 255, 0.88) !important;
+    border-color: rgba(148, 163, 184, 0.28) !important;
+    box-shadow: 0 20px 60px rgba(71, 85, 105, 0.2) !important;
+  }
+
+  html:not(.dark) .action-toast > span {
+    color: #047857 !important;
+    font-weight: 600;
+  }
+
+  html:not(.dark) .action-toast > svg {
+    color: #059669 !important;
+  }
+
+  html:not(.dark) .action-toast button:hover {
+    background-color: rgba(148, 163, 184, 0.12) !important;
+  }
+
+  html:not(.dark) .task-edit-icon,
+  html:not(.dark) .habit-edit-icon,
+  html:not(.dark) .focus-edit-icon {
+    background-color: transparent !important;
+    color: #7c3aed !important;
+  }
+
+  html:not(.dark) .task-edit-icon:hover,
+  html:not(.dark) .habit-edit-icon:hover,
+  html:not(.dark) .focus-edit-icon:hover {
+    background-color: transparent !important;
+    color: #6d28d9 !important;
+  }
+
+  html:not(.dark) .task-delete-icon,
+  html:not(.dark) .habit-delete-icon,
+  html:not(.dark) .focus-delete-icon {
+    background-color: transparent !important;
+    color: #dc2626 !important;
+  }
+
+  html:not(.dark) .task-delete-icon:hover,
+  html:not(.dark) .habit-delete-icon:hover,
+  html:not(.dark) .focus-delete-icon:hover {
+    background-color: transparent !important;
+    color: #b91c1c !important;
+  }
+
   .landing-signin-hover {
     position: relative;
     overflow: hidden;

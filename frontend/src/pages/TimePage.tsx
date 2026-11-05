@@ -11,6 +11,7 @@ import {
   Clock,
   Plus,
   Trash2,
+  Pencil,
   Calendar,
   Tag,
   CheckCircle2,
@@ -60,6 +61,7 @@ export const TimePage: React.FC = () => {
   const [entries, setEntries] = useState<TimeEntryItem[]>([]);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [isLoggerOpen, setIsLoggerOpen] = useState(false);
+  const [entryToEdit, setEntryToEdit] = useState<TimeEntryItem | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoadingEntries, setIsLoadingEntries] = useState(true);
 
@@ -146,6 +148,11 @@ export const TimePage: React.FC = () => {
     } finally {
       setTimeEntryToDelete(null);
     }
+  };
+
+  const handleEditTimeEntry = (entry: TimeEntryItem) => {
+    setEntryToEdit(entry);
+    setIsLoggerOpen(true);
   };
 
   const handleDisconnectCalendar = async () => {
@@ -380,13 +387,22 @@ export const TimePage: React.FC = () => {
                         </div>
                       </div>
 
-                      <button
-                        onClick={() => handleDeleteTimeEntry(entry.id)}
-                        title="Delete Focus Block"
-                        className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleEditTimeEntry(entry)}
+                          title="Edit Focus Block"
+                          className="focus-edit-icon p-1.5 text-slate-500 hover:text-cyan-400 hover:bg-cyan-950/30 rounded-lg transition-colors"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTimeEntry(entry.id)}
+                          title="Delete Focus Block"
+                          className="focus-delete-icon p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -399,8 +415,15 @@ export const TimePage: React.FC = () => {
       {/* Productivity Logger Modal */}
       <TimeLoggerModal
         isOpen={isLoggerOpen}
-        onClose={() => setIsLoggerOpen(false)}
-        onLogged={() => setRefreshKey((k) => k + 1)}
+        initialEntry={entryToEdit}
+        onClose={() => {
+          setIsLoggerOpen(false);
+          setEntryToEdit(null);
+        }}
+        onLogged={() => {
+          setRefreshKey((k) => k + 1);
+          setEntryToEdit(null);
+        }}
       />
 
       <WindowDialogUpdation

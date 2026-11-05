@@ -88,7 +88,7 @@ export const HabitCreateModal: React.FC<HabitCreateModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
+            className="modal-close-button rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
           >
             <X className="h-5 w-5" />
           </button>
@@ -140,9 +140,9 @@ export const HabitCreateModal: React.FC<HabitCreateModalProps> = ({
               <button
                 type="button"
                 onClick={() => setIsEveryday(true)}
-                className={`py-2 px-3 text-xs rounded-xl border transition-all ${
+                className={`frequency-option py-2 px-3 text-xs rounded-xl border transition-all ${
                   isEveryday
-                    ? "bg-amber-500/20 border-amber-500/40 text-amber-300 font-semibold"
+                    ? "is-selected bg-amber-500/20 border-amber-500/40 text-amber-300 font-semibold"
                     : "border-slate-800 bg-slate-800/40 text-slate-400 hover:bg-slate-800"
                 }`}
               >
@@ -151,9 +151,9 @@ export const HabitCreateModal: React.FC<HabitCreateModalProps> = ({
               <button
                 type="button"
                 onClick={() => setIsEveryday(false)}
-                className={`py-2 px-3 text-xs rounded-xl border transition-all ${
+                className={`frequency-option py-2 px-3 text-xs rounded-xl border transition-all ${
                   !isEveryday
-                    ? "bg-amber-500/20 border-amber-500/40 text-amber-300 font-semibold"
+                    ? "is-selected bg-amber-500/20 border-amber-500/40 text-amber-300 font-semibold"
                     : "border-slate-800 bg-slate-800/40 text-slate-400 hover:bg-slate-800"
                 }`}
               >
@@ -188,7 +188,7 @@ export const HabitCreateModal: React.FC<HabitCreateModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-1/2 rounded-xl border border-slate-700 py-2.5 text-xs font-medium text-slate-300 hover:bg-slate-800"
+              className="habit-cancel-button w-1/2 rounded-xl border border-slate-700 py-2.5 text-xs font-medium text-slate-300 hover:bg-slate-800"
             >
               Cancel
             </button>

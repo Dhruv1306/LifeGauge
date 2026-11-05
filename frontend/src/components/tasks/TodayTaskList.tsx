@@ -72,17 +72,17 @@ export const TodayTaskList: React.FC<TodayTaskListProps> = ({
             <div
               key={task.id}
               onClick={() => handleToggle(task)}
-              className={`flex items-start justify-between p-3 rounded-xl border transition-all cursor-pointer ${
+              className={`task-row flex items-start justify-between p-3 rounded-xl border transition-all cursor-pointer ${
                 task.isCompleted
                   ? "bg-slate-800/40 border-slate-800"
                   : "bg-slate-800/40 border-slate-800 hover:border-slate-700"
               }`}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex min-w-0 items-start gap-3">
                 <button
                   type="button"
                   disabled={togglingId === task.id}
-                  className={`mt-0.5 flex h-5 w-5 items-center justify-center rounded-lg border transition-colors ${
+                  className={`mt-0.5 flex h-5 w-5 min-w-5 shrink-0 items-center justify-center rounded-lg border transition-colors ${
                     task.isCompleted
                       ? "bg-emerald-500 border-emerald-500 text-slate-950"
                       : "border-slate-600 hover:border-emerald-400"
@@ -94,7 +94,7 @@ export const TodayTaskList: React.FC<TodayTaskListProps> = ({
                     <Square className="h-3.5 w-3.5 opacity-0" />
                   )}
                 </button>
-                <div>
+                <div className="min-w-0">
                   <h4
                     className={`text-xs font-medium ${
                       task.isCompleted ? "line-through text-slate-400" : "text-slate-200"
@@ -126,7 +126,7 @@ export const TodayTaskList: React.FC<TodayTaskListProps> = ({
                     setEditingTask(task);
                   }}
                   title="Edit Task"
-                  className="p-1 text-slate-500 hover:text-cyan-400 hover:bg-cyan-950/30 rounded-lg transition-colors"
+                  className="task-edit-icon p-1 text-slate-500 hover:text-cyan-400 hover:bg-cyan-950/30 rounded-lg transition-colors"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>

@@ -1,12 +1,23 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import { X, Clock, Check } from "lucide-react";
+
+export interface TimeLoggerInitialEntry {
+  id: string;
+  date: string;
+  category: string;
+  durationMin: number;
+  startTime?: string | null;
+  endTime?: string | null;
+  description?: string | null;
+}
 
 interface TimeLoggerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLogged: () => void;
   initialDate?: string;
+  initialEntry?: TimeLoggerInitialEntry | null;
 }
 
 export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
@@ -14,8 +25,9 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
   onClose,
   onLogged,
   initialDate,
+  initialEntry,
 }) => {
-  const [date, setDate] = useState(initialDate || new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState("");
   const [category, setCategory] = useState("DSA");
   const [durationMin, setDurationMin] = useState<number>(60);
   const [startTime, setStartTime] = useState("14:00");
@@ -23,6 +35,17 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setDate(initialEntry?.date || initialDate || new Date().toISOString().split("T")[0]);
+    setCategory(initialEntry?.category || "DSA");
+    setDurationMin(initialEntry?.durationMin || 60);
+    setStartTime(initialEntry?.startTime || "14:00");
+    setEndTime(initialEntry?.endTime || "15:00");
+    setDescription(initialEntry?.description || "");
+    setErrorMsg(null);
+  }, [initialDate, initialEntry, isOpen]);
 
   if (!isOpen) return null;
 
@@ -34,14 +57,19 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
     setErrorMsg(null);
 
     try {
-      await api.post("/time-entries", {
+      const payload = {
         date,
         category,
         durationMin: Number(durationMin),
         startTime: startTime || null,
         endTime: endTime || null,
         description: description || null,
-      });
+      };
+      if (initialEntry) {
+        await api.patch(`/time-entries/${initialEntry.id}`, payload);
+      } else {
+        await api.post("/time-entries", payload);
+      }
       onLogged();
       onClose();
     } catch (err: unknown) {
@@ -62,9 +90,11 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-emerald-400" />
-            <h3 className="text-base font-semibold text-white">Log Focus / Time Block</h3>
+            <h3 className="text-base font-semibold text-white">
+              {initialEntry ? "Edit Focus / Time Block" : "Log Focus / Time Block"}
+            </h3>
           </div>
-          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white">
+          <button onClick={onClose} className="modal-close-button rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -165,7 +195,7 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-1/2 rounded-xl border border-slate-700 py-2.5 text-xs font-medium text-slate-300 hover:bg-slate-800"
+              className="focus-cancel-button w-1/2 rounded-xl border border-slate-700 py-2.5 text-xs font-medium text-slate-300 hover:bg-slate-800"
             >
               Cancel
             </button>
@@ -175,7 +205,9 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
               className="w-1/2 flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-2.5 text-xs font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
             >
               <Check className="h-4 w-4" />
-              {isSubmitting ? "Logging..." : "Log Time Block"}
+              {isSubmitting
+                ? initialEntry ? "Saving..." : "Logging..."
+                : initialEntry ? "Save Time Block" : "Log Time Block"}
             </button>
           </div>
         </form>

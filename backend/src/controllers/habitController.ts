@@ -60,6 +60,44 @@ function generateDateRange(startStr: string, endStr: string): string[] {
   return dates;
 }
 
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
+
+function getMonthName(monthNumber: number): string {
+  return MONTH_NAMES[monthNumber - 1] || "";
+}
+
+function getMonthDateRange(
+  year: number,
+  month: number
+): { startDate: string; endDate: string } {
+  const y = String(year);
+  const m = String(month).padStart(2, "0");
+  const startDate = `${y}-${m}-01`;
+  // Date.UTC(year, month, 0) gives the last day of month 'month' (1-indexed)
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const endDate = `${y}-${m}-${String(lastDay).padStart(2, "0")}`;
+  return { startDate, endDate };
+}
+
+function formatDateReadable(dateStr: string): string {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const monthName = getMonthName(month);
+  return `${monthName} ${day}, ${year}`;
+}
+
 export async function getHabits(req: AuthenticatedRequest, res: Response): Promise<void> {
   const userId = req.user?.id;
   if (!userId) {
@@ -221,6 +259,36 @@ export async function toggleHabit(req: AuthenticatedRequest, res: Response): Pro
 
   const { date } = parsed.data;
 
+  // Cannot log habits for future dates
+  const todayStr = new Date().toISOString().split("T")[0];
+  if (date > todayStr) {
+    res.status(400).json({
+      success: false,
+      error: "Cannot log habits for future dates.",
+    });
+    return;
+  }
+
+  // Cannot log habits prior to user registration date
+  try {
+    const user = await prisma.user?.findUnique({
+      where: { id: userId },
+      select: { createdAt: true },
+    });
+    if (user?.createdAt) {
+      const regDateStr = new Date(user.createdAt).toISOString().split("T")[0];
+      if (date < regDateStr) {
+        res.status(400).json({
+          success: false,
+          error: "Cannot log habits prior to your account registration date.",
+        });
+        return;
+      }
+    }
+  } catch (err) {
+    console.error("[toggleHabit] error checking registration date:", err);
+  }
+
   // Verify habit ownership
   const habit = await prisma.habit.findFirst({
     where: { id: habitId, userId },
@@ -321,14 +389,93 @@ export async function getHabitMatrix(req: AuthenticatedRequest, res: Response): 
     return;
   }
 
-  const today = new Date();
-  const defaultEnd = today.toISOString().split("T")[0];
-  const fourteenDaysAgo = new Date(today);
-  fourteenDaysAgo.setUTCDate(today.getUTCDate() - 13);
-  const defaultStart = fourteenDaysAgo.toISOString().split("T")[0];
+  // Retrieve user registration date
+  let registrationDate = "1970-01-01";
+  try {
+    const user = await prisma.user?.findUnique({
+      where: { id: userId },
+      select: { createdAt: true },
+    });
+    if (user?.createdAt) {
+      registrationDate = new Date(user.createdAt).toISOString().split("T")[0];
+    }
+  } catch (err) {
+    console.error("[getHabitMatrix] error checking registration date:", err);
+  }
 
-  const startDate = (req.query.startDate as string) || defaultStart;
-  const endDate = (req.query.endDate as string) || defaultEnd;
+  const today = new Date();
+  const todayStr = today.toISOString().split("T")[0];
+
+  let startDate: string;
+  let endDate: string;
+  let selectedYear: number | undefined;
+  let selectedMonth: number | undefined;
+
+  const queryMonth = req.query.month as string | undefined;
+  const queryYear = req.query.year as string | undefined;
+
+  if (queryYear && queryMonth) {
+    const y = parseInt(queryYear, 10);
+    const m = parseInt(queryMonth, 10);
+    if (!isNaN(y) && !isNaN(m) && m >= 1 && m <= 12) {
+      selectedYear = y;
+      selectedMonth = m;
+      const range = getMonthDateRange(y, m);
+      startDate = range.startDate;
+      endDate = range.endDate;
+    } else {
+      res.status(400).json({ success: false, error: "Invalid year or month parameter." });
+      return;
+    }
+  } else if (queryMonth && queryMonth.includes("-")) {
+    const [yStr, mStr] = queryMonth.split("-");
+    const y = parseInt(yStr, 10);
+    const m = parseInt(mStr, 10);
+    if (!isNaN(y) && !isNaN(m) && m >= 1 && m <= 12) {
+      selectedYear = y;
+      selectedMonth = m;
+      const range = getMonthDateRange(y, m);
+      startDate = range.startDate;
+      endDate = range.endDate;
+    } else {
+      res.status(400).json({ success: false, error: "Invalid month format. Expected YYYY-MM." });
+      return;
+    }
+  } else {
+    const defaultEnd = todayStr;
+    const fourteenDaysAgo = new Date(today);
+    fourteenDaysAgo.setUTCDate(today.getUTCDate() - 13);
+    const defaultStart = fourteenDaysAgo.toISOString().split("T")[0];
+
+    startDate = (req.query.startDate as string) || defaultStart;
+    endDate = (req.query.endDate as string) || defaultEnd;
+  }
+
+  // Pre-registration check:
+  // If the entire requested window ends BEFORE the user registered
+  if (endDate < registrationDate) {
+    const monthName = selectedMonth ? getMonthName(selectedMonth) : "the requested period";
+    const yearLabel = selectedYear ? ` ${selectedYear}` : "";
+    const regReadable = formatDateReadable(registrationDate);
+    const periodLabel = selectedMonth && selectedYear ? `${monthName}${yearLabel}` : "this period";
+
+    res.status(200).json({
+      success: true,
+      isPreRegistration: true,
+      registrationDate,
+      message: `You don't have any Matrix data for ${periodLabel} because your account was registered on ${regReadable}. You can view your Matrix records starting from your registration date.`,
+      startDate,
+      endDate,
+      dates: [],
+      habits: [],
+      summary: {
+        totalScheduled: 0,
+        totalCompleted: 0,
+        consistencyRate: 100,
+      },
+    });
+    return;
+  }
 
   const dates = generateDateRange(startDate, endDate);
 
@@ -349,22 +496,53 @@ export async function getHabitMatrix(req: AuthenticatedRequest, res: Response): 
 
   const matrix = habits.map((habit) => {
     const logMap = new Map(habit.logs.map((log) => [log.date, log.isCompleted]));
-    const days: Record<string, { scheduled: boolean; completed: boolean }> = {};
+    const days: Record<
+      string,
+      { scheduled: boolean; completed: boolean; isFuture?: boolean; outsideTracking?: boolean }
+    > = {};
 
     for (const date of dates) {
       const dayCode = getDayCode(date);
-      const isBeforeStart = habit.startDate ? date < habit.startDate : false;
-      const scheduled = !isBeforeStart && isHabitScheduledForDay(habit.targetDays, dayCode);
-      const completed = !!logMap.get(date);
+      const isBeforeReg = date < registrationDate;
+      const isFutureDate = date > todayStr;
 
-      if (scheduled) {
-        totalScheduled += 1;
-        if (completed) {
-          totalCompleted += 1;
+      let scheduled = false;
+      let completed = false;
+
+      if (isBeforeReg) {
+        // Outside tracking period: NOT scheduled, NOT missed
+        scheduled = false;
+        completed = false;
+      } else if (isFutureDate) {
+        // Future date: Unscheduled, NOT missed
+        scheduled = false;
+        completed = false;
+      } else {
+        // Active tracking period
+        const isBeforeStart = habit.startDate ? date < habit.startDate : false;
+        scheduled = !isBeforeStart && isHabitScheduledForDay(habit.targetDays, dayCode);
+        completed = !!logMap.get(date);
+
+        if (scheduled) {
+          totalScheduled += 1;
+          if (completed) {
+            totalCompleted += 1;
+          }
         }
       }
 
-      days[date] = { scheduled, completed };
+      const dayState: { scheduled: boolean; completed: boolean; isFuture?: boolean; outsideTracking?: boolean } = {
+        scheduled,
+        completed,
+      };
+      if (isFutureDate) {
+        dayState.isFuture = true;
+      }
+      if (isBeforeReg) {
+        dayState.outsideTracking = true;
+      }
+
+      days[date] = dayState;
     }
 
     return {
@@ -385,6 +563,8 @@ export async function getHabitMatrix(req: AuthenticatedRequest, res: Response): 
     startDate,
     endDate,
     dates,
+    registrationDate,
+    isPreRegistration: false,
     habits: matrix,
     summary: {
       totalScheduled,

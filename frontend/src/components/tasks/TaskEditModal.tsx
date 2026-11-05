@@ -78,7 +78,7 @@ export const TaskEditModal: React.FC<TaskEditModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
+            className="modal-close-button rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
           >
             <X className="h-5 w-5" />
           </button>
@@ -153,7 +153,7 @@ export const TaskEditModal: React.FC<TaskEditModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-1/2 rounded-xl border border-slate-700 py-2.5 text-xs font-medium text-slate-300 hover:bg-slate-800"
+              className="task-cancel-button w-1/2 rounded-xl border border-slate-700 py-2.5 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-800"
             >
               Cancel
             </button>

@@ -157,7 +157,7 @@ export const TasksPage: React.FC = () => {
             Loading tasks...
           </div>
         ) : tasks.length === 0 ? (
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/40 py-16 text-center text-xs text-slate-400">
+          <div className="task-empty-state rounded-2xl border border-slate-800 bg-slate-900/40 py-16 text-center text-xs text-slate-400">
             No tasks found matching your filter criteria.
           </div>
         ) : (
@@ -165,16 +165,16 @@ export const TasksPage: React.FC = () => {
             {tasks.map((task) => (
               <div
                 key={task.id}
-                className={`flex items-start justify-between p-4 rounded-2xl border transition-all ${
+                className={`task-row flex items-start justify-between p-4 rounded-2xl border transition-all ${
                   task.isCompleted
                     ? "bg-slate-900/80 border-slate-800"
                     : "bg-slate-900/80 border-slate-800 hover:border-slate-700"
                 }`}
               >
-                <div className="flex items-start gap-3.5">
+                <div className="flex min-w-0 items-start gap-3.5">
                   <button
                     onClick={() => handleToggle(task)}
-                    className={`mt-0.5 flex h-5 w-5 items-center justify-center rounded-lg border transition-colors ${
+                    className={`mt-0.5 flex h-5 w-5 min-w-5 shrink-0 items-center justify-center rounded-lg border transition-colors ${
                       task.isCompleted
                         ? "bg-emerald-500 border-emerald-500 text-slate-950 font-bold"
                         : "border-slate-600 hover:border-cyan-400"
@@ -185,7 +185,7 @@ export const TasksPage: React.FC = () => {
                     )}
                   </button>
 
-                  <div>
+                  <div className="min-w-0">
                     <h3
                       className={`text-sm font-medium ${
                         task.isCompleted
@@ -220,7 +220,7 @@ export const TasksPage: React.FC = () => {
                   <button
                     onClick={() => setEditingTask(task)}
                     title="Edit Task"
-                    className="p-1.5 text-slate-500 hover:text-cyan-400 hover:bg-cyan-950/30 rounded-lg transition-colors"
+                    className="task-edit-icon p-1.5 text-slate-500 hover:text-cyan-400 hover:bg-cyan-950/30 rounded-lg transition-colors"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -228,7 +228,7 @@ export const TasksPage: React.FC = () => {
                   <button
                     onClick={() => handleDelete(task.id)}
                     title="Delete Task"
-                    className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 rounded-lg transition-colors"
+                    className="task-delete-icon p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 rounded-lg transition-colors"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

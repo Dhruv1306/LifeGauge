@@ -160,7 +160,7 @@ export const HabitsPage: React.FC = () => {
                   onDragStart={(e) => handleDragStart(e, index)}
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, index)}
-                  className={`py-3 flex items-center justify-between gap-3 transition-colors ${
+                  className={`configured-habit-row py-3 flex items-center justify-between gap-3 transition-colors ${
                     draggedIndex === index
                       ? "opacity-40 bg-slate-800/40 rounded-xl px-2"
                       : "hover:bg-slate-800/20 px-2 rounded-xl"
@@ -221,7 +221,7 @@ export const HabitsPage: React.FC = () => {
                     <button
                       onClick={() => setEditingHabit(habit)}
                       title="Edit Habit"
-                      className="p-1.5 text-slate-500 hover:text-amber-400 hover:bg-amber-950/30 rounded-lg transition-colors"
+                      className="habit-edit-icon p-1.5 text-slate-500 hover:text-amber-400 hover:bg-amber-950/30 rounded-lg transition-colors"
                     >
                       <Pencil className="h-4 w-4" />
                     </button>
@@ -229,7 +229,7 @@ export const HabitsPage: React.FC = () => {
                     <button
                       onClick={() => handleDelete(habit.id)}
                       title="Delete Habit"
-                      className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 rounded-lg transition-colors"
+                      className="habit-delete-icon p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 rounded-lg transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>

@@ -61,7 +61,7 @@ export const DashboardPage: React.FC = () => {
     <div className="min-h-screen bg-olive-50 dark:bg-slate-950 pb-16 transition-colors duration-200">
       <Navbar />
 
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
         {/* Cockpit Date Bar & Quick Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/90 dark:bg-slate-900/60 p-4 rounded-2xl border border-olive-200 dark:border-slate-800 shadow-sm">
           <div className="flex items-center gap-3">
