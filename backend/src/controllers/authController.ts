@@ -154,8 +154,8 @@ export async function login(req: AuthenticatedRequest, res: Response): Promise<v
     res.status(401).json({
       success: false,
       error: {
-        code: "AUTH_INVALID_CREDENTIALS",
-        message: "Email or password is incorrect.",
+        code: "AUTH_USER_NOT_FOUND",
+        message: "User doesn't exist.",
       },
     });
     return;
@@ -166,8 +166,8 @@ export async function login(req: AuthenticatedRequest, res: Response): Promise<v
     res.status(401).json({
       success: false,
       error: {
-        code: "AUTH_INVALID_CREDENTIALS",
-        message: "Email or password is incorrect.",
+        code: "AUTH_INCORRECT_PASSWORD",
+        message: "Incorrect password. Please try again.",
       },
     });
     return;
