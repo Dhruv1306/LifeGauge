@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { ProtectedRoute } from "./components/common/ProtectedRoute";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -13,58 +14,61 @@ import { ActionToast } from "./components/common/ActionToast";
 
 export const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
 
-          {/* Protected Application Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Protected Application Routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/tasks"
-            element={
-              <ProtectedRoute>
-                <TasksPage />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/tasks"
+              element={
+                <ProtectedRoute>
+                  <TasksPage />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/habits"
-            element={
-              <ProtectedRoute>
-                <HabitsPage />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/habits"
+              element={
+                <ProtectedRoute>
+                  <HabitsPage />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/time"
-            element={
-              <ProtectedRoute>
-                <TimePage />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/time"
+              element={
+                <ProtectedRoute>
+                  <TimePage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Fallback to Public Landing */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        <ActionToast />
-      </BrowserRouter>
-    </AuthProvider>
+            {/* Fallback to Public Landing */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+          <ActionToast />
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 
 export default App;
+

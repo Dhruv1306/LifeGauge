@@ -2,33 +2,183 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =========================================================
+   CSS CUSTOM PROPERTIES — THEME TOKENS
+   Dark mode (default): slate-based dark cockpit aesthetic
+   Light mode (.dark removed): Olive Garden Fiesta palette
+   ========================================================= */
+
 @layer base {
+  /* Light mode (root default — no .dark class) */
+  :root {
+    --bg-canvas:          #FEFAE0; /* warm ivory */
+    --bg-surface:         #FFFFFF;
+    --bg-surface-2:       #F4F0D0; /* inner accents */
+    --bg-surface-hover:   #EDE8C4;
+    --border:             #E5DFB8;
+    --border-strong:      #D8D1A3;
+    --text-primary:       #283618; /* dark forest green */
+    --text-secondary:     #606C38; /* olive */
+    --text-muted:         #8A8F6A;
+    --text-inverse:       #FEFAE0;
+    --accent-primary:     #606C38; /* olive buttons */
+    --accent-primary-hover: #4E582E;
+    --accent-glow:        #606C38;
+    --accent-secondary:   #BC6C25; /* warm brown */
+    --accent-badge:       #DDA15E; /* golden tan */
+    --status-completed:   #2A7B4C;
+    --status-missed:      #C5283D;
+    --status-unscheduled: #B5B08C;
+    --navbar-bg:          rgba(254, 250, 224, 0.92);
+    --navbar-border:      #E5DFB8;
+    --scrollbar-track:    #F4F0D0;
+    --scrollbar-thumb:    #D8D1A3;
+    --scrollbar-thumb-hover: #A8A47A;
+    --selection-bg:       #606C38;
+    --selection-text:     #FEFAE0;
+  }
+
+  /* Dark mode — existing cockpit aesthetic preserved exactly */
+  .dark {
+    --bg-canvas:          #020617; /* slate-950 */
+    --bg-surface:         #0f172a; /* slate-900 */
+    --bg-surface-2:       #1e293b; /* slate-800 */
+    --bg-surface-hover:   #334155; /* slate-700 */
+    --border:             #1e293b;
+    --border-strong:      #334155;
+    --text-primary:       #f1f5f9; /* slate-100 */
+    --text-secondary:     #94a3b8; /* slate-400 */
+    --text-muted:         #64748b; /* slate-500 */
+    --text-inverse:       #0f172a;
+    --accent-primary:     #10b981; /* emerald-500 */
+    --accent-primary-hover: #34d399; /* emerald-400 */
+    --accent-glow:        #10b981;
+    --accent-secondary:   #f59e0b; /* amber-500 */
+    --accent-badge:       #f59e0b;
+    --status-completed:   #10b981;
+    --status-missed:      #f43f5e;
+    --status-unscheduled: #334155;
+    --navbar-bg:          rgba(2, 6, 23, 0.85);
+    --navbar-border:      #1e293b;
+    --scrollbar-track:    #0f172a;
+    --scrollbar-thumb:    #334155;
+    --scrollbar-thumb-hover: #475569;
+    --selection-bg:       #10b981;
+    --selection-text:     #ffffff;
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
   body {
-    @apply bg-slate-950 text-slate-100 font-sans;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    @apply font-sans antialiased min-h-screen transition-colors duration-150;
+  }
+
+  ::selection {
+    background-color: var(--selection-bg);
+    color: var(--selection-text);
   }
 }
 
-@keyframes lifegauge-toast-progress {
-  from {
-    transform: scaleX(1);
-  }
-  to {
-    transform: scaleX(0);
-  }
+/* =========================================================
+   LIGHT THEME OVERRIDES (when .dark class is NOT present)
+   Preserves dark theme 100% when .dark is present, while
+   delivering the Olive Garden Fiesta palette across all surfaces.
+   ========================================================= */
+html:not(.dark) .bg-slate-950 {
+  background-color: var(--bg-canvas) !important;
 }
 
-/* Custom Cockpit Scrollbar */
+html:not(.dark) .bg-slate-900,
+html:not(.dark) .bg-slate-900\/90,
+html:not(.dark) .bg-slate-900\/80,
+html:not(.dark) .bg-slate-900\/70,
+html:not(.dark) .bg-slate-900\/60,
+html:not(.dark) .bg-slate-900\/50 {
+  background-color: var(--bg-surface) !important;
+}
+
+html:not(.dark) .bg-slate-800,
+html:not(.dark) .bg-slate-800\/90,
+html:not(.dark) .bg-slate-800\/80,
+html:not(.dark) .bg-slate-800\/70,
+html:not(.dark) .bg-slate-800\/60,
+html:not(.dark) .bg-slate-800\/50 {
+  background-color: var(--bg-surface-2) !important;
+}
+
+html:not(.dark) .border-slate-800,
+html:not(.dark) .border-slate-800\/80,
+html:not(.dark) .border-slate-800\/60,
+html:not(.dark) .border-slate-850,
+html:not(.dark) .border-slate-700,
+html:not(.dark) .border-slate-700\/60 {
+  border-color: var(--border) !important;
+}
+
+html:not(.dark) h1:not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-cyan"]):not([class*="text-rose"]):not([class*="text-indigo"]),
+html:not(.dark) h2:not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-cyan"]):not([class*="text-rose"]):not([class*="text-indigo"]),
+html:not(.dark) h3:not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-cyan"]):not([class*="text-rose"]):not([class*="text-indigo"]),
+html:not(.dark) .text-white:not(button):not(button *):not(.bg-emerald-600 *):not(.bg-cyan-600 *):not(.bg-amber-600 *):not(.bg-rose-600 *):not(.bg-indigo-600 *):not(.badge *) {
+  color: var(--text-primary) !important;
+}
+
+html:not(.dark) .text-slate-100,
+html:not(.dark) .text-slate-200,
+html:not(.dark) .text-slate-300 {
+  color: var(--text-primary) !important;
+}
+
+html:not(.dark) .text-slate-400 {
+  color: var(--text-secondary) !important;
+}
+
+html:not(.dark) .text-slate-500 {
+  color: var(--text-muted) !important;
+}
+
+html:not(.dark) input:not([type="checkbox"]):not([type="radio"]),
+html:not(.dark) select,
+html:not(.dark) textarea {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-surface-2) !important;
+  border-color: var(--border) !important;
+}
+
+html:not(.dark) input::placeholder,
+html:not(.dark) textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* =========================================================
+   SCROLLBAR — THEMED
+   ========================================================= */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: var(--scrollbar-track);
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* =========================================================
+   TOAST ANIMATION
+   ========================================================= */
+@keyframes lifegauge-toast-progress {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
 }

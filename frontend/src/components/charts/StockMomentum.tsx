@@ -11,6 +11,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { TrendingUp, TrendingDown, Minus, RefreshCw } from "lucide-react";
+import { useTheme } from "../../context/ThemeContext";
 
 interface TimeSeriesPoint {
   date: string;
@@ -38,6 +39,16 @@ interface StockMomentumProps {
 }
 
 export const StockMomentum: React.FC<StockMomentumProps> = ({ refreshTrigger }) => {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === "light";
+  const gridColor = isLight ? "#E5DFB8" : "#1e293b";
+  const tickColor = isLight ? "#606C38" : "#64748b";
+  const axisColor = isLight ? "#D8D1A3" : "#334155";
+  const steadyColor = isLight ? "#BC6C25" : "#334155";
+  const steadyTextColor = isLight ? "#BC6C25" : "#64748b";
+  const highColor = isLight ? "#283618" : "#10b981";
+  const chartStroke = isLight ? "#606C38" : "#10b981";
+
   const [data, setData] = useState<MomentumData | null>(null);
   const [daysParam, setDaysParam] = useState<7 | 14 | 30>(14);
   const [isLoading, setIsLoading] = useState(true);
@@ -145,47 +156,47 @@ export const StockMomentum: React.FC<StockMomentumProps> = ({ refreshTrigger }) 
           <AreaChart data={timeSeries} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                <stop offset="5%" stopColor={chartStroke} stopOpacity={0.4} />
+                <stop offset="95%" stopColor={chartStroke} stopOpacity={0.0} />
               </linearGradient>
             </defs>
 
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
 
             <XAxis
               dataKey="dayLabel"
-              tick={{ fill: "#64748b", fontSize: 10 }}
-              axisLine={{ stroke: "#334155" }}
+              tick={{ fill: tickColor, fontSize: 10 }}
+              axisLine={{ stroke: axisColor }}
               tickLine={false}
             />
 
             <YAxis
               domain={[0, 10]}
               ticks={[0, 2.5, 5.0, 7.5, 10.0]}
-              tick={{ fill: "#64748b", fontSize: 10 }}
-              axisLine={{ stroke: "#334155" }}
+              tick={{ fill: tickColor, fontSize: 10 }}
+              axisLine={{ stroke: axisColor }}
               tickLine={false}
             />
 
             {/* Horizontal Reference Lines (Stock chart thresholds) */}
             <ReferenceLine
               y={7.5}
-              stroke="#059669"
+              stroke={highColor}
               strokeDasharray="4 4"
               label={{
                 value: "High (7.5)",
-                fill: "#10b981",
+                fill: highColor,
                 fontSize: 10,
                 position: "insideTopRight",
               }}
             />
             <ReferenceLine
               y={5.0}
-              stroke="#334155"
+              stroke={steadyColor}
               strokeDasharray="4 4"
               label={{
                 value: "Steady (5.0)",
-                fill: "#64748b",
+                fill: steadyTextColor,
                 fontSize: 10,
                 position: "insideTopRight",
               }}
@@ -196,35 +207,35 @@ export const StockMomentum: React.FC<StockMomentumProps> = ({ refreshTrigger }) 
                 if (active && payload && payload.length) {
                   const pt = payload[0].payload as TimeSeriesPoint;
                   return (
-                    <div className="rounded-xl border border-slate-800 bg-slate-900/95 p-3 shadow-2xl backdrop-blur-md text-xs">
-                      <div className="font-semibold text-slate-200 border-b border-slate-800 pb-1 mb-1.5 flex justify-between gap-4">
+                    <div className="rounded-xl border border-olive-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 p-3 shadow-2xl backdrop-blur-md text-xs">
+                      <div className="font-semibold text-olive-900 dark:text-slate-200 border-b border-olive-200 dark:border-slate-800 pb-1 mb-1.5 flex justify-between gap-4">
                         <span>{pt.date}</span>
                         <span
                           className={`font-mono font-bold ${
                             pt.isRestDay
-                              ? "text-slate-400"
+                              ? "text-olive-600 dark:text-slate-400"
                               : (pt.score ?? 0) >= 7.5
-                              ? "text-emerald-400"
+                              ? "text-olive-800 dark:text-emerald-400 font-bold"
                               : (pt.score ?? 0) >= 5.0
-                              ? "text-cyan-400"
-                              : "text-amber-400"
+                              ? "text-olive-600 dark:text-cyan-400"
+                              : "text-amber-600 dark:text-amber-400"
                           }`}
                         >
                           {pt.isRestDay ? "Rest Day" : `${pt.score?.toFixed(1)} / 10.0`}
                         </span>
                       </div>
-                      <div className="space-y-1 text-slate-400">
+                      <div className="space-y-1 text-olive-700 dark:text-slate-400">
                         <div className="flex justify-between gap-3">
                           <span>Focus Time:</span>
-                          <span className="font-mono text-slate-200">{pt.focusHours}h</span>
+                          <span className="font-mono text-olive-900 dark:text-slate-200">{pt.focusHours}h</span>
                         </div>
                         <div className="flex justify-between gap-3">
                           <span>Task Completion:</span>
-                          <span className="font-mono text-slate-200">{pt.taskCompletionRate}%</span>
+                          <span className="font-mono text-olive-900 dark:text-slate-200">{pt.taskCompletionRate}%</span>
                         </div>
                         <div className="flex justify-between gap-3">
                           <span>Habit Consistency:</span>
-                          <span className="font-mono text-slate-200">{pt.habitConsistency}%</span>
+                          <span className="font-mono text-olive-900 dark:text-slate-200">{pt.habitConsistency}%</span>
                         </div>
                       </div>
                     </div>
@@ -237,7 +248,7 @@ export const StockMomentum: React.FC<StockMomentumProps> = ({ refreshTrigger }) 
             <Area
               type="monotone"
               dataKey="displayScore"
-              stroke="#10b981"
+              stroke={chartStroke}
               strokeWidth={2.5}
               fillOpacity={1}
               fill="url(#scoreGradient)"
