@@ -36,7 +36,7 @@ export const ActionToast: React.FC = () => {
     <div
       role="status"
       aria-live="polite"
-      className={`fixed right-4 top-24 z-[60] flex min-h-20 w-fit min-w-72 max-w-[90vw] items-center gap-3.5 overflow-hidden rounded-3xl border px-4 py-5 text-sm shadow-[0_20px_60px_rgba(2,6,23,0.45)] backdrop-blur-xl ring-1 md:top-20 md:max-w-[30vw] ${
+      className={`action-toast fixed right-4 top-24 z-[60] flex min-h-20 w-fit min-w-72 max-w-[90vw] items-center gap-3.5 overflow-hidden rounded-3xl border px-4 py-5 text-sm shadow-[0_20px_60px_rgba(2,6,23,0.45)] backdrop-blur-xl ring-1 md:top-20 md:max-w-[30vw] ${
         isError
           ? "border-rose-300/15 bg-rose-950/45 text-rose-200 ring-rose-300/10"
           : "border-white/15 bg-slate-900/55 text-emerald-200 ring-emerald-300/10"

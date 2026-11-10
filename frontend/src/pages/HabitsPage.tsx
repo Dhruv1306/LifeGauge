@@ -12,8 +12,6 @@ import {
   Calendar,
   Pencil,
   GripVertical,
-  ChevronUp,
-  ChevronDown,
 } from "lucide-react";
 
 interface HabitItem {
@@ -21,24 +19,45 @@ interface HabitItem {
   title: string;
   targetDays: string;
   startDate?: string | null;
+  endDate?: string | null;
   order?: number;
-  isActive: boolean;
+  isActive?: boolean;
   createdAt: string;
+  periods?: Array<{ startDate: string; endDate: string }>;
+}
+
+function formatTargetDays(targetDays: string): string {
+  if (targetDays === "ALL") return "Everyday (7 Days)";
+  return targetDays
+    .split(",")
+    .map((day) => {
+      const normalized = day.trim().toLowerCase();
+      return normalized ? normalized[0].toUpperCase() + normalized.slice(1, 3) : "";
+    })
+    .filter(Boolean)
+    .join(", ");
 }
 
 export const HabitsPage: React.FC = () => {
   const [habits, setHabits] = useState<HabitItem[]>([]);
+  const [completedHabits, setCompletedHabits] = useState<HabitItem[]>([]);
+  const [habitView, setHabitView] = useState<"configured" | "completed">("configured");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<HabitItem | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [habitToDelete, setHabitToDelete] = useState<string | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [resumingHabitId, setResumingHabitId] = useState<string | null>(null);
 
   const fetchHabits = async () => {
     try {
       const res = await api.get("/habits");
+      const completedRes = await api.get("/habits/completed");
       if (res.data.success) {
         setHabits(res.data.habits);
+      }
+      if (completedRes.data.success) {
+        setCompletedHabits(completedRes.data.habits);
       }
     } catch (err) {
       console.error("Failed to load habits", err);
@@ -60,15 +79,6 @@ export const HabitsPage: React.FC = () => {
       console.error("Failed to reorder habits", err);
       fetchHabits();
     }
-  };
-
-  const moveHabit = (index: number, direction: "up" | "down") => {
-    const targetIndex = direction === "up" ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= habits.length) return;
-    const updated = [...habits];
-    const [moved] = updated.splice(index, 1);
-    updated.splice(targetIndex, 0, moved);
-    handleReorder(updated);
   };
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -93,6 +103,20 @@ export const HabitsPage: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     setHabitToDelete(id);
+  };
+
+  const handleResume = async (id: string) => {
+    setResumingHabitId(id);
+    try {
+      await api.post(`/habits/${id}/resume`, {
+        startDate: new Date().toISOString().split("T")[0],
+      });
+      setRefreshKey((k) => k + 1);
+    } catch (err) {
+      console.error("Failed to resume habit", err);
+    } finally {
+      setResumingHabitId(null);
+    }
   };
 
   const confirmDelete = async () => {
@@ -135,31 +159,55 @@ export const HabitsPage: React.FC = () => {
         {/* Embedded Habit Matrix */}
         <HabitMatrix refreshTrigger={refreshKey} />
 
-        {/* Active Habits List */}
+        {/* Habit Lists */}
         <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-white">
-              Configured Habits
-            </h3>
-            <span className="text-[11px] text-slate-400">
-              Drag handles or use arrows to reorder
-            </span>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex rounded-xl border border-slate-800 bg-slate-900/80 p-1">
+              <button
+                type="button"
+                onClick={() => setHabitView("configured")}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  habitView === "configured"
+                    ? "bg-amber-600 text-white shadow-sm"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                Configured Habits
+              </button>
+              <button
+                type="button"
+                onClick={() => setHabitView("completed")}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  habitView === "completed"
+                    ? "bg-amber-600 text-white shadow-sm"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                Completed Habits
+              </button>
+            </div>
+            {habitView === "configured" && (
+            <p className="mb-3 text-[11px] text-slate-400">
+              Drag handles to reorder
+            </p>
+          )}
           </div>
 
-          {habits.length === 0 ? (
+          {(habitView === "configured" ? habits : completedHabits).length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-400">
-              No habits configured yet. Click &ldquo;New Habit&rdquo; to start
-              tracking.
+              {habitView === "configured"
+                ? "No habits configured yet. Click “New Habit” to start tracking."
+                : "No completed habits yet."}
             </div>
           ) : (
             <div className="divide-y divide-slate-800/80">
-              {habits.map((habit, index) => (
+              {(habitView === "configured" ? habits : completedHabits).map((habit, index) => (
                 <div
                   key={habit.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, index)}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, index)}
+                  draggable={habitView === "configured"}
+                  onDragStart={habitView === "configured" ? (e) => handleDragStart(e, index) : undefined}
+                  onDragOver={habitView === "configured" ? handleDragOver : undefined}
+                  onDrop={habitView === "configured" ? (e) => handleDrop(e, index) : undefined}
                   className={`configured-habit-row py-3 flex items-center justify-between gap-3 transition-colors ${
                     draggedIndex === index
                       ? "opacity-40 bg-slate-800/40 rounded-xl px-2"
@@ -167,57 +215,67 @@ export const HabitsPage: React.FC = () => {
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    {/* Drag Handle & Up/Down Arrows */}
-                    <div className="flex items-center gap-0.5 text-slate-500">
+                    {/* Drag Handle */}
+                    {habitView === "configured" ? (
                       <div
-                        className="cursor-grab active:cursor-grabbing p-1 hover:text-slate-300"
+                        className="cursor-grab active:cursor-grabbing p-1 text-slate-500 hover:text-slate-300"
                         title="Drag to reorder"
                       >
                         <GripVertical className="h-4 w-4" />
                       </div>
-                      <div className="flex flex-col">
-                        <button
-                          type="button"
-                          disabled={index === 0}
-                          onClick={() => moveHabit(index, "up")}
-                          title="Move Up"
-                          className="p-0.5 text-slate-500 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed"
-                        >
-                          <ChevronUp className="h-3 w-3" />
-                        </button>
-                        <button
-                          type="button"
-                          disabled={index === habits.length - 1}
-                          onClick={() => moveHabit(index, "down")}
-                          title="Move Down"
-                          className="p-0.5 text-slate-500 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed"
-                        >
-                          <ChevronDown className="h-3 w-3" />
-                        </button>
-                      </div>
-                    </div>
+                    ) : (
+                      <div className="w-6 shrink-0" aria-hidden="true" />
+                    )}
 
-                    <div className="truncate">
-                      <h4 className="text-sm font-medium text-white truncate">
-                        {habit.title}
-                      </h4>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <h4 className="text-sm font-medium text-white truncate">
+                          {habit.title}
+                        </h4>
+                      </div>
                       <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono text-slate-400 mt-0.5">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3 text-amber-400" />
-                          {habit.targetDays === "ALL"
-                            ? "Everyday (7 Days)"
-                            : habit.targetDays}
+                          {formatTargetDays(habit.targetDays)}
                         </span>
                         {habit.startDate && (
                           <span className="text-slate-500">
                             Started: {habit.startDate.split("T")[0]}
                           </span>
                         )}
+                        {habitView === "completed" && habit.endDate && (
+                          <span className="text-amber-500/80">
+                            Completed: {habit.endDate.split("T")[0]}
+                          </span>
+                        )}
+                        {habit.periods && habit.periods.length > 0 && (
+                          <div className="basis-full mt-1">
+                            <div className="text-slate-500">Previous working:</div>
+                            <ol className="list-decimal pl-6 text-slate-500">
+                              {habit.periods.map((period) => (
+                                <li key={`${period.startDate}-${period.endDate}`}>
+                                  {period.startDate} - {period.endDate}
+                                </li>
+                              ))}
+                            </ol>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
+                    {habitView === "completed" && (
+                      <button
+                        type="button"
+                        onClick={() => handleResume(habit.id)}
+                        disabled={resumingHabitId === habit.id}
+                        title="Resume Habit"
+                        className="habit-resume-icon rounded-lg p-1.5 text-emerald-500 hover:bg-emerald-500/10"
+                      >
+                        {resumingHabitId === habit.id ? "Resuming..." : "Resume"}
+                      </button>
+                    )}
                     <button
                       onClick={() => setEditingHabit(habit)}
                       title="Edit Habit"

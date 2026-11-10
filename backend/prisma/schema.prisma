@@ -62,6 +62,7 @@ model Habit {
   title      String
   targetDays String     @default("ALL") // "MON,TUE,WED,THU,FRI,SAT,SUN" or "ALL"
   startDate  String?    // "YYYY-MM-DD" - start date of habit
+  endDate    String?    // "YYYY-MM-DD" - finishing date of habit
   order      Int        @default(0)     // display order position
   isActive   Boolean    @default(true)
   createdAt  DateTime   @default(now())
@@ -69,10 +70,25 @@ model Habit {
 
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   logs       HabitLog[]
+  periods    HabitPeriod[]
+  scheduleOverrides HabitScheduleOverride[]
 
   @@index([userId])
   @@index([userId, order])
   @@map("habits")
+}
+
+model HabitPeriod {
+  id        String   @id @default(uuid())
+  habitId   String
+  startDate String
+  endDate   String
+  createdAt DateTime @default(now())
+
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@index([habitId])
+  @@map("habit_periods")
 }
 
 model HabitLog {
@@ -87,6 +103,21 @@ model HabitLog {
   @@unique([habitId, date])
   @@index([habitId])
   @@map("habit_logs")
+}
+
+model HabitScheduleOverride {
+  id        String   @id @default(uuid())
+  habitId   String
+  date      String
+  scheduled Boolean
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@unique([habitId, date])
+  @@index([habitId])
+  @@map("habit_schedule_overrides")
 }
 
 model TimeEntry {

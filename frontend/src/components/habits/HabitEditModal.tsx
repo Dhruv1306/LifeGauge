@@ -7,9 +7,12 @@ export interface HabitItem {
   title: string;
   targetDays: string;
   startDate?: string | null;
+  endDate?: string | null;
   order?: number;
-  isActive: boolean;
+  isActive?: boolean;
   createdAt: string;
+  periods?: Array<{ startDate: string; endDate: string }>;
+  scheduleOverrides?: Array<{ date: string; scheduled: boolean }>;
 }
 
 interface HabitEditModalProps {
@@ -27,6 +30,7 @@ export const HabitEditModal: React.FC<HabitEditModalProps> = ({
 }) => {
   const [title, setTitle] = useState("");
   const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [isEveryday, setIsEveryday] = useState(true);
   const [selectedDays, setSelectedDays] = useState<string[]>([
     "MON",
@@ -35,16 +39,17 @@ export const HabitEditModal: React.FC<HabitEditModalProps> = ({
     "THU",
     "FRI",
   ]);
-  const [isActive, setIsActive] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [todayScheduled, setTodayScheduled] = useState(true);
+  const [initialTodayScheduled, setInitialTodayScheduled] = useState(true);
 
   // Prepopulate form on open or habit change
   useEffect(() => {
     if (habit) {
       setTitle(habit.title || "");
       setStartDate(habit.startDate ? habit.startDate.split("T")[0] : "");
-      setIsActive(habit.isActive !== false);
+      setEndDate(habit.endDate ? habit.endDate.split("T")[0] : "");
       if (habit.targetDays === "ALL") {
         setIsEveryday(true);
         setSelectedDays(["MON", "TUE", "WED", "THU", "FRI"]);
@@ -53,6 +58,14 @@ export const HabitEditModal: React.FC<HabitEditModalProps> = ({
         const days = habit.targetDays ? habit.targetDays.split(",").map((s) => s.trim()) : [];
         setSelectedDays(days.length > 0 ? days : ["MON", "TUE", "WED", "THU", "FRI"]);
       }
+      const today = new Date();
+      const dayCode = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][today.getDay()];
+      const defaultScheduled =
+        habit.targetDays === "ALL" || habit.targetDays.split(",").map((day) => day.trim()).includes(dayCode);
+      const override = habit.scheduleOverrides?.[0];
+      const currentScheduled = override ? override.scheduled : defaultScheduled;
+      setTodayScheduled(currentScheduled);
+      setInitialTodayScheduled(currentScheduled);
       setErrorMsg(null);
     }
   }, [habit, isOpen]);
@@ -87,6 +100,11 @@ export const HabitEditModal: React.FC<HabitEditModalProps> = ({
       return;
     }
 
+    if (startDate && endDate && endDate < startDate) {
+      setErrorMsg("Finishing date cannot be earlier than start date.");
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg(null);
 
@@ -97,8 +115,13 @@ export const HabitEditModal: React.FC<HabitEditModalProps> = ({
         title: title.trim(),
         targetDays,
         startDate: startDate || null,
-        isActive,
+        endDate: endDate || null,
       });
+      if (todayScheduled !== initialTodayScheduled) {
+        await api.post(`/habits/${habit.id}/schedule-today`, {
+          scheduled: todayScheduled,
+        });
+      }
 
       onUpdated();
       onClose();
@@ -115,8 +138,8 @@ export const HabitEditModal: React.FC<HabitEditModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/75 backdrop-blur-sm p-4 sm:items-center">
+      <div className="flex w-full max-w-md max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
             <Flame className="h-5 w-5 text-amber-400" />
@@ -130,7 +153,7 @@ export const HabitEditModal: React.FC<HabitEditModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-4 min-h-0 overflow-y-auto space-y-4">
           {errorMsg && (
             <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 p-2.5 text-xs text-rose-400">
               {errorMsg}
@@ -151,6 +174,28 @@ export const HabitEditModal: React.FC<HabitEditModalProps> = ({
             />
           </div>
 
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-medium text-slate-200">Today&apos;s schedule</p>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Change only today; previous days cannot be edited.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTodayScheduled((scheduled) => !scheduled)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  todayScheduled
+                    ? "bg-amber-500 text-slate-950 hover:bg-amber-400"
+                    : "border border-slate-600 text-slate-300 hover:border-amber-400 hover:text-amber-300"
+                }`}
+              >
+                {todayScheduled ? "Scheduled" : "Unscheduled"}
+              </button>
+            </div>
+          </div>
+
           <div>
             <label className="block text-xs font-medium text-slate-300 mb-1">
               Tracking Start Date
@@ -163,6 +208,33 @@ export const HabitEditModal: React.FC<HabitEditModalProps> = ({
             />
             <p className="text-[11px] text-slate-500 mt-1">
               Days prior to this start date will not be counted as missed.
+            </p>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-medium text-slate-300">
+                Finishing Date
+              </label>
+              {endDate && (
+                <button
+                  type="button"
+                  onClick={() => setEndDate("")}
+                  className="habit-edit-clear text-[10px] text-amber-400 hover:text-amber-300 hover:underline"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <input
+              type="date"
+              value={endDate}
+              min={startDate || undefined}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none [color-scheme:dark]"
+            />
+            <p className="text-[11px] text-slate-500 mt-1">
+              Habit will stop tracking after this date. From the following month, it will not appear in the Habit Matrix.
             </p>
           </div>
 
@@ -197,7 +269,7 @@ export const HabitEditModal: React.FC<HabitEditModalProps> = ({
             </div>
 
             {!isEveryday && (
-              <div className="flex justify-between gap-1 bg-slate-800/40 p-2 rounded-xl border border-slate-700/60">
+              <div className="frequency-days flex justify-between gap-1 bg-slate-800/40 p-2 rounded-xl border border-slate-700/60">
                 {dayOptions.map((day) => {
                   const isSelected = selectedDays.includes(day.code);
                   return (
@@ -217,22 +289,6 @@ export const HabitEditModal: React.FC<HabitEditModalProps> = ({
                 })}
               </div>
             )}
-          </div>
-
-          <div className="flex items-center justify-between p-3 rounded-xl border border-slate-800 bg-slate-800/40">
-            <div>
-              <div className="text-xs font-medium text-white">Active Status</div>
-              <div className="text-[11px] text-slate-400">Include in daily tracking & punchcard matrix</div>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
-            </label>
           </div>
 
           <div className="flex gap-3 pt-2">

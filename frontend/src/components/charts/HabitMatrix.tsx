@@ -23,6 +23,7 @@ interface HabitMatrixData {
     title: string;
     targetDays: string;
     startDate?: string | null;
+    endDate?: string | null;
     order?: number;
     days: Record<
       string,
@@ -239,16 +240,16 @@ export const HabitMatrix: React.FC<HabitMatrixProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 border-b border-slate-800 pb-3">
         <div>
           <div className="flex items-center gap-2">
-            <Flame className="h-5 w-5 text-emerald-400" />
+            <Flame className="h-5 w-5 text-amber-400" />
             <h3 className="text-base font-semibold text-white">
               Habit Matrix
             </h3>
-            <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[11px] font-mono font-medium text-emerald-400 border border-emerald-500/20">
-              GitHub
+            <span className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[11px] font-mono font-medium text-amber-500 border border-amber-500/20">
+              The Mirror of Your Dedication
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            The mirror of Your Dedication.
+            The Person You want to become depends on the <strong>people you spend time with and the habits you start...</strong>
           </p>
         </div>
 
@@ -510,10 +511,14 @@ export const HabitMatrix: React.FC<HabitMatrixProps> = ({
                           className="h-[44px] px-0.5 text-center"
                         >
                           {isOutside ? (
-                            /* Outside tracking period (Pre-registration partial month) */
+                            /* Outside tracking period (Pre-registration or post-finishing date) */
                             <div
-                              title={`Outside tracking period (Account registered on ${data.registrationDate || ""})`}
-                              className="mx-auto flex h-7 w-7 items-center justify-center rounded-lg border border-dashed border-slate-700/60 dark:border-slate-800/60 bg-slate-800/20 dark:bg-slate-900/30 text-slate-500 cursor-not-allowed select-none"
+                              title={
+                                habit.endDate && date > habit.endDate
+                                  ? `${habit.title} on ${date}: Outside tracking period (Habit completed on ${habit.endDate})`
+                                  : `Outside tracking period (Account registered on ${data.registrationDate || ""})`
+                              }
+                              className="habit-matrix-outside mx-auto flex h-7 w-7 items-center justify-center rounded-lg border border-dashed border-slate-700/60 dark:border-slate-800/60 bg-slate-800/20 dark:bg-slate-900/30 text-slate-500 cursor-not-allowed select-none"
                             >
                               <span className="text-[11px]">&ndash;</span>
                             </div>
@@ -591,7 +596,7 @@ export const HabitMatrix: React.FC<HabitMatrixProps> = ({
         </div>
         {viewMode === "monthly" && (
           <div className="flex items-center gap-1.5">
-            <span className="h-3.5 w-3.5 rounded-md border border-dashed border-slate-700 bg-slate-800/30 flex items-center justify-center text-slate-500 font-mono text-[10px]">
+            <span className="habit-matrix-outside h-3.5 w-3.5 rounded-md border border-dashed border-slate-700 bg-slate-800/30 flex items-center justify-center text-slate-500 font-mono text-[10px]">
               &ndash;
             </span>
             <span>Outside Tracking Period</span>

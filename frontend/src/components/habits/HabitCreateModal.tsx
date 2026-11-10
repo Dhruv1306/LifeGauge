@@ -79,8 +79,8 @@ export const HabitCreateModal: React.FC<HabitCreateModalProps> = ({
 
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/75 backdrop-blur-sm p-4 sm:items-center">
+      <div className="flex w-full max-w-md max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
             <Flame className="h-5 w-5 text-amber-400" />
@@ -94,7 +94,7 @@ export const HabitCreateModal: React.FC<HabitCreateModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-4 min-h-0 overflow-y-auto space-y-4">
           {errorMsg && (
             <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 p-2.5 text-xs text-rose-400">
               {errorMsg}
@@ -162,7 +162,7 @@ export const HabitCreateModal: React.FC<HabitCreateModalProps> = ({
             </div>
 
             {!isEveryday && (
-              <div className="flex flex-wrap gap-1.5 pt-1">
+              <div className="frequency-days flex flex-wrap gap-1.5 pt-1">
                 {dayOptions.map((d) => {
                   const isSelected = selectedDays.includes(d.code);
                   return (

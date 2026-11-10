@@ -10,6 +10,7 @@ const createHabitSchema = z.object({
   title: z.string().min(1, "Habit title is required").trim(),
   targetDays: z.string().default("ALL"), // e.g. "MON,TUE,WED,THU,FRI" or "ALL"
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date must be in YYYY-MM-DD format").optional().nullable(),
+  endDate: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Finishing date must be in YYYY-MM-DD format"), z.literal(""), z.null()]).optional(),
   order: z.number().int().optional(),
 });
 
@@ -17,6 +18,7 @@ const updateHabitSchema = z.object({
   title: z.string().min(1).trim().optional(),
   targetDays: z.string().optional(),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date must be in YYYY-MM-DD format").optional().nullable(),
+  endDate: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Finishing date must be in YYYY-MM-DD format"), z.literal(""), z.null()]).optional(),
   order: z.number().int().optional(),
   isActive: z.boolean().optional(),
 });
@@ -27,6 +29,10 @@ const reorderHabitsSchema = z.object({
 
 const toggleHabitSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
+});
+
+const scheduleOverrideSchema = z.object({
+  scheduled: z.boolean(),
 });
 
 function getDayCode(dateStr: string): DayCode {
@@ -92,6 +98,12 @@ function getMonthDateRange(
   return { startDate, endDate };
 }
 
+function getEndOfMonthDate(dateStr: string): string {
+  const [year, month] = dateStr.split("-").map(Number);
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+}
+
 function formatDateReadable(dateStr: string): string {
   const [year, month, day] = dateStr.split("-").map(Number);
   const monthName = getMonthName(month);
@@ -106,7 +118,15 @@ export async function getHabits(req: AuthenticatedRequest, res: Response): Promi
   }
 
   const habits = await prisma.habit.findMany({
-    where: { userId, isActive: true },
+    where: { userId, isActive: true, endDate: null },
+    include: {
+      scheduleOverrides: {
+        where: { date: new Date().toISOString().split("T")[0] },
+      },
+      periods: {
+        orderBy: { startDate: "asc" },
+      },
+    },
     orderBy: [{ order: "asc" }, { createdAt: "asc" }],
   });
 
@@ -115,6 +135,29 @@ export async function getHabits(req: AuthenticatedRequest, res: Response): Promi
     count: habits.length,
     habits,
   });
+}
+
+export async function getCompletedHabits(req: AuthenticatedRequest, res: Response): Promise<void> {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ success: false, error: "Unauthorized" });
+    return;
+  }
+
+  const habits = await prisma.habit.findMany({
+    where: { userId, isActive: true, endDate: { not: null } },
+    include: {
+      periods: {
+        orderBy: { startDate: "asc" },
+      },
+      scheduleOverrides: {
+        where: { date: new Date().toISOString().split("T")[0] },
+      },
+    },
+    orderBy: [{ endDate: "desc" }, { createdAt: "asc" }],
+  });
+
+  res.status(200).json({ success: true, count: habits.length, habits });
 }
 
 export async function createHabit(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -133,7 +176,7 @@ export async function createHabit(req: AuthenticatedRequest, res: Response): Pro
     return;
   }
 
-  const { title, targetDays, startDate, order } = parsed.data;
+  const { title, targetDays, startDate, endDate, order } = parsed.data;
 
   let assignedOrder = order;
   if (assignedOrder === undefined) {
@@ -146,16 +189,40 @@ export async function createHabit(req: AuthenticatedRequest, res: Response): Pro
   }
 
   const assignedStartDate = startDate || new Date().toISOString().split("T")[0];
+  const assignedEndDate = endDate === "" ? null : (endDate || null);
+
+  if (assignedEndDate && assignedEndDate < assignedStartDate) {
+    res.status(400).json({
+      success: false,
+      error: "Finishing date cannot be earlier than start date.",
+    });
+    return;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const createData: any = {
+    userId,
+    title,
+    targetDays: targetDays.toUpperCase(),
+    startDate: assignedStartDate,
+    order: assignedOrder,
+  };
+  if (endDate !== undefined) {
+    createData.endDate = assignedEndDate;
+  }
 
   const habit = await prisma.habit.create({
-    data: {
-      userId,
-      title,
-      targetDays: targetDays.toUpperCase(),
-      startDate: assignedStartDate,
-      order: assignedOrder,
-    },
+    data: createData,
   });
+  if (assignedEndDate) {
+    await prisma.habitPeriod.create({
+      data: {
+        habitId: habit.id,
+        startDate: assignedStartDate,
+        endDate: assignedEndDate,
+      },
+    });
+  }
 
   res.status(201).json({
     success: true,
@@ -191,11 +258,28 @@ export async function updateHabit(req: AuthenticatedRequest, res: Response): Pro
     return;
   }
 
+  // Validate that endDate >= startDate if both exist
+  const effectiveStartDate = parsed.data.startDate !== undefined ? parsed.data.startDate : existingHabit.startDate;
+  const effectiveEndDate = parsed.data.endDate !== undefined
+    ? (parsed.data.endDate === "" ? null : parsed.data.endDate)
+    : existingHabit.endDate;
+
+  if (effectiveStartDate && effectiveEndDate && effectiveEndDate < effectiveStartDate) {
+    res.status(400).json({
+      success: false,
+      error: "Finishing date cannot be earlier than start date.",
+    });
+    return;
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateData: any = {};
   if (parsed.data.title !== undefined) updateData.title = parsed.data.title;
   if (parsed.data.targetDays !== undefined) updateData.targetDays = parsed.data.targetDays.toUpperCase();
   if (parsed.data.startDate !== undefined) updateData.startDate = parsed.data.startDate;
+  if (parsed.data.endDate !== undefined) {
+    updateData.endDate = parsed.data.endDate === "" ? null : parsed.data.endDate;
+  }
   if (parsed.data.order !== undefined) updateData.order = parsed.data.order;
   if (parsed.data.isActive !== undefined) updateData.isActive = parsed.data.isActive;
 
@@ -204,9 +288,78 @@ export async function updateHabit(req: AuthenticatedRequest, res: Response): Pro
     data: updateData,
   });
 
+  const nextEndDate = effectiveEndDate;
+  if (
+    existingHabit.endDate === null &&
+    nextEndDate &&
+    effectiveStartDate
+  ) {
+    await prisma.habitPeriod.create({
+      data: {
+        habitId,
+        startDate: effectiveStartDate,
+        endDate: nextEndDate,
+      },
+    });
+  } else if (existingHabit.endDate && nextEndDate) {
+    const latestPeriod = await prisma.habitPeriod.findFirst({
+      where: { habitId },
+      orderBy: { startDate: "desc" },
+    });
+    if (latestPeriod) {
+      await prisma.habitPeriod.update({
+        where: { id: latestPeriod.id },
+        data: { startDate: effectiveStartDate || latestPeriod.startDate, endDate: nextEndDate },
+      });
+    }
+  }
+
   res.status(200).json({
     success: true,
     message: "Habit updated successfully",
+    habit: updatedHabit,
+  });
+}
+
+export async function resumeHabit(req: AuthenticatedRequest, res: Response): Promise<void> {
+  const userId = req.user?.id;
+  const habitId = req.params.id;
+  if (!userId) {
+    res.status(401).json({ success: false, error: "Unauthorized" });
+    return;
+  }
+
+  const requestedStartDate =
+    typeof req.body?.startDate === "string" && req.body.startDate
+      ? req.body.startDate
+      : new Date().toISOString().split("T")[0];
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(requestedStartDate)) {
+    res.status(400).json({ success: false, error: "Resume date must be in YYYY-MM-DD format." });
+    return;
+  }
+
+  const habit = await prisma.habit.findFirst({ where: { id: habitId, userId } });
+  if (!habit) {
+    res.status(404).json({ success: false, error: "Habit not found." });
+    return;
+  }
+  if (!habit.endDate) {
+    res.status(400).json({ success: false, error: "Only completed habits can be resumed." });
+    return;
+  }
+  if (requestedStartDate <= habit.endDate) {
+    res.status(400).json({ success: false, error: "Resume date must be after the completion date." });
+    return;
+  }
+
+  const updatedHabit = await prisma.habit.update({
+    where: { id: habitId },
+    data: { startDate: requestedStartDate, endDate: null },
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Habit resumed successfully",
     habit: updatedHabit,
   });
 }
@@ -296,6 +449,24 @@ export async function toggleHabit(req: AuthenticatedRequest, res: Response): Pro
 
   if (!habit) {
     res.status(404).json({ success: false, error: "Habit not found." });
+    return;
+  }
+
+  // Cannot log habits prior to habit start date
+  if (habit.startDate && date < habit.startDate) {
+    res.status(400).json({
+      success: false,
+      error: "Cannot log habits prior to habit start date.",
+    });
+    return;
+  }
+
+  // Cannot log habits after finishing date
+  if (habit.endDate && date > habit.endDate) {
+    res.status(400).json({
+      success: false,
+      error: "Cannot log habits after finishing date.",
+    });
     return;
   }
 
@@ -487,15 +658,34 @@ export async function getHabitMatrix(req: AuthenticatedRequest, res: Response): 
           date: { in: dates },
         },
       },
+      scheduleOverrides: {
+        where: { date: { in: dates } },
+      },
+      periods: {
+        orderBy: { startDate: "asc" },
+      },
     },
     orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+  });
+
+  // Filter habits based on finishing date:
+  // Habit remains visible until completion of the month in which it ended.
+  // After that month ends (i.e. query range starts after end-of-month of habit.endDate),
+  // the habit is excluded from the matrix.
+  const visibleHabits = habits.filter((habit) => {
+    if (!habit.endDate) return true;
+    const endMonthEnd = getEndOfMonthDate(habit.endDate);
+    return startDate <= endMonthEnd;
   });
 
   let totalScheduled = 0;
   let totalCompleted = 0;
 
-  const matrix = habits.map((habit) => {
+  const matrix = visibleHabits.map((habit) => {
     const logMap = new Map(habit.logs.map((log) => [log.date, log.isCompleted]));
+    const scheduleOverrideMap = new Map(
+      (habit.scheduleOverrides ?? []).map((override) => [override.date, override.scheduled])
+    );
     const days: Record<
       string,
       { scheduled: boolean; completed: boolean; isFuture?: boolean; outsideTracking?: boolean }
@@ -505,6 +695,19 @@ export async function getHabitMatrix(req: AuthenticatedRequest, res: Response): 
       const dayCode = getDayCode(date);
       const isBeforeReg = date < registrationDate;
       const isFutureDate = date > todayStr;
+      const periods = habit.periods || [];
+      const hasPeriodData = Array.isArray(habit.periods);
+      const isInHistoricalPeriod = periods.some(
+        (period) => date >= period.startDate && date <= period.endDate
+      );
+      const isInCurrentPeriod =
+        (!habit.startDate || date >= habit.startDate) &&
+        (!habit.endDate || date <= habit.endDate);
+      const isInWorkingPeriod = isInHistoricalPeriod || isInCurrentPeriod;
+      const isBeforeStart = !!habit.startDate && date < habit.startDate;
+      const isAfterEnd = !!habit.endDate && date > habit.endDate;
+      const isOutsideTracking =
+        hasPeriodData && !isInWorkingPeriod && (isBeforeStart || isAfterEnd);
 
       let scheduled = false;
       let completed = false;
@@ -517,10 +720,15 @@ export async function getHabitMatrix(req: AuthenticatedRequest, res: Response): 
         // Future date: Unscheduled, NOT missed
         scheduled = false;
         completed = false;
+      } else if (!isInWorkingPeriod && (isBeforeStart || isAfterEnd)) {
+        // Outside habit active tracking lifetime: NOT scheduled, NOT missed
+        scheduled = false;
+        completed = false;
       } else {
         // Active tracking period
-        const isBeforeStart = habit.startDate ? date < habit.startDate : false;
-        scheduled = !isBeforeStart && isHabitScheduledForDay(habit.targetDays, dayCode);
+        scheduled = scheduleOverrideMap.has(date)
+          ? scheduleOverrideMap.get(date) === true
+          : isHabitScheduledForDay(habit.targetDays, dayCode);
         completed = !!logMap.get(date);
 
         if (scheduled) {
@@ -538,7 +746,7 @@ export async function getHabitMatrix(req: AuthenticatedRequest, res: Response): 
       if (isFutureDate) {
         dayState.isFuture = true;
       }
-      if (isBeforeReg) {
+      if (isBeforeReg || isAfterEnd || (isOutsideTracking && hasPeriodData)) {
         dayState.outsideTracking = true;
       }
 
@@ -550,6 +758,7 @@ export async function getHabitMatrix(req: AuthenticatedRequest, res: Response): 
       title: habit.title,
       targetDays: habit.targetDays,
       startDate: habit.startDate,
+      endDate: habit.endDate,
       order: habit.order,
       days,
     };
@@ -574,3 +783,46 @@ export async function getHabitMatrix(req: AuthenticatedRequest, res: Response): 
   });
 }
 
+export async function updateTodaySchedule(
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> {
+  const userId = req.user?.id;
+  const habitId = req.params.id;
+  if (!userId) {
+    res.status(401).json({ success: false, error: "Unauthorized" });
+    return;
+  }
+
+  const parsed = scheduleOverrideSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ success: false, error: "scheduled must be a boolean." });
+    return;
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+  const habit = await prisma.habit.findFirst({ where: { id: habitId, userId } });
+  if (!habit) {
+    res.status(404).json({ success: false, error: "Habit not found." });
+    return;
+  }
+
+  if (
+    (habit.startDate && today < habit.startDate) ||
+    (habit.endDate && today > habit.endDate)
+  ) {
+    res.status(400).json({
+      success: false,
+      error: "Only a habit currently being tracked can be rescheduled for today.",
+    });
+    return;
+  }
+
+  const override = await prisma.habitScheduleOverride.upsert({
+    where: { habitId_date: { habitId, date: today } },
+    create: { habitId, date: today, scheduled: parsed.data.scheduled },
+    update: { scheduled: parsed.data.scheduled },
+  });
+
+  res.status(200).json({ success: true, scheduleOverride: override });
+}
