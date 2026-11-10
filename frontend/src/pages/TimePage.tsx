@@ -59,6 +59,7 @@ export const TimePage: React.FC = () => {
 
   // Focus Logs state
   const [entries, setEntries] = useState<TimeEntryItem[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>(["General"]);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [isLoggerOpen, setIsLoggerOpen] = useState(false);
   const [entryToEdit, setEntryToEdit] = useState<TimeEntryItem | null>(null);
@@ -121,6 +122,32 @@ export const TimePage: React.FC = () => {
       if (res.data.success) {
         setEntries(res.data.entries);
       }
+      if (categoryFilter !== "all") {
+        const allEntriesRes = await api.get("/time-entries");
+        if (allEntriesRes.data.success) {
+          setCategoryOptions(
+            Array.from(
+              new Set([
+                "General",
+                ...allEntriesRes.data.entries.map(
+                  (entry: TimeEntryItem) => entry.category,
+                ),
+              ]),
+            ),
+          );
+        }
+      } else {
+        setCategoryOptions(
+          Array.from(
+            new Set([
+              "General",
+              ...res.data.entries.map(
+                (entry: TimeEntryItem) => entry.category,
+              ),
+            ]),
+          ),
+        );
+      }
     } catch (err) {
       console.error("Failed to load time entries", err);
     } finally {
@@ -177,17 +204,6 @@ export const TimePage: React.FC = () => {
     setSearchParams({ tab });
   };
 
-  const categories = [
-    "all",
-    "DSA",
-    "Study",
-    "Coding",
-    "College",
-    "Fitness",
-    "Reading",
-    "General",
-  ];
-  const previousCategories = Array.from(new Set(entries.map((entry) => entry.category)));
 
   return (
     <div className="min-h-screen bg-slate-950 pb-16">
@@ -309,8 +325,8 @@ export const TimePage: React.FC = () => {
               <span className="text-xs text-slate-400 mr-2 flex items-center gap-1">
                 <Tag className="h-3.5 w-3.5" /> Filter Category:
               </span>
-              <div className="flex flex-wrap gap-1.5">
-                {categories.map((c) => (
+              <div className="flex max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto">
+                {["all", ...categoryOptions].map((c) => (
                   <button
                     key={c}
                     onClick={() => setCategoryFilter(c)}
@@ -320,7 +336,7 @@ export const TimePage: React.FC = () => {
                         : "bg-slate-800 text-slate-400 hover:text-white"
                     }`}
                   >
-                    {c}
+                    {c === "all" ? "All" : c}
                   </button>
                 ))}
               </div>
@@ -361,21 +377,16 @@ export const TimePage: React.FC = () => {
                           <span className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
                             {entry.category}
                           </span>
-                          <span className="text-xs font-mono font-bold text-white">
-                            {(entry.durationMin / 60).toFixed(1)} hrs (
-                            {entry.durationMin} min)
-                          </span>
-                          {entry.startTime && entry.endTime && (
-                            <span className="text-[11px] font-mono text-slate-500">
-                              {entry.startTime} &ndash; {entry.endTime}
-                            </span>
-                          )}
                         </div>
 
                         <div className="flex items-center gap-3 text-[11px] text-slate-500">
                           <span className="flex items-center gap-1 font-mono">
                             <Calendar className="h-3 w-3" />
                             {entry.date}
+                          </span>
+                          <span className="font-mono font-bold text-white">
+                            {(entry.durationMin / 60).toFixed(1)} hrs (
+                            {entry.durationMin} min)
                           </span>
                           {entry.task && (
                             <span className="text-cyan-400">
@@ -414,7 +425,7 @@ export const TimePage: React.FC = () => {
       <TimeLoggerModal
         isOpen={isLoggerOpen}
         initialEntry={entryToEdit}
-        categories={previousCategories}
+        categories={categoryOptions}
         onClose={() => {
           setIsLoggerOpen(false);
           setEntryToEdit(null);
