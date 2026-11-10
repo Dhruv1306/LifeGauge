@@ -124,8 +124,8 @@ model TimeEntry {
   id          String   @id @default(uuid())
   userId      String
   taskId      String?
+  name        String   @default("Focus Session")
   category    String   // e.g. "DSA", "Study", "Coding", "Fitness", "General"
-  description String?  @db.Text
   date        String   // "YYYY-MM-DD"
   startTime   String?  // e.g. "14:00"
   endTime     String?  // e.g. "15:30"

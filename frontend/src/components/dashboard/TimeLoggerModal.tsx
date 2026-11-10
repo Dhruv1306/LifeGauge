@@ -1,15 +1,52 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../../api/client";
-import { X, Clock, Check } from "lucide-react";
+import { X, Clock, Check, Plus } from "lucide-react";
+
+function parseTime(value: string): number | null {
+  const match = value.trim().match(/^(\d{1,2}):([0-5]\d)\s*(AM|PM)$/i);
+  if (!match) return null;
+  let hour = Number(match[1]);
+  if (hour < 1 || hour > 12) return null;
+  if (match[3].toUpperCase() === "PM" && hour !== 12) hour += 12;
+  if (match[3].toUpperCase() === "AM" && hour === 12) hour = 0;
+  return hour * 60 + Number(match[2]);
+}
+
+function formatTime12(value: string): string {
+  const match = value.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+  if (!match) return value;
+  const hour24 = Number(match[1]);
+  const suffix = hour24 >= 12 ? "PM" : "AM";
+  const hour12 = hour24 % 12 || 12;
+  return `${String(hour12).padStart(2, "0")}:${match[2]} ${suffix}`;
+}
+
+function toTime24(value: string): string | null {
+  const minutes = parseTime(value);
+  if (minutes === null) return null;
+  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+}
+
+function calculateDuration(start: string, end: string): number {
+  const startMinutes = parseTime(start);
+  const endMinutes = parseTime(end);
+  if (startMinutes === null || endMinutes === null) return 0;
+  return endMinutes >= startMinutes ? endMinutes - startMinutes : endMinutes + 1440 - startMinutes;
+}
+
+function formatDuration(minutes: number): string {
+  if (!minutes) return "00:00";
+  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+}
 
 export interface TimeLoggerInitialEntry {
   id: string;
   date: string;
+  name?: string;
   category: string;
   durationMin: number;
   startTime?: string | null;
   endTime?: string | null;
-  description?: string | null;
 }
 
 interface TimeLoggerModalProps {
@@ -18,6 +55,7 @@ interface TimeLoggerModalProps {
   onLogged: () => void;
   initialDate?: string;
   initialEntry?: TimeLoggerInitialEntry | null;
+  categories?: string[];
 }
 
 export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
@@ -26,44 +64,56 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
   onLogged,
   initialDate,
   initialEntry,
+  categories = [],
 }) => {
   const [date, setDate] = useState("");
-  const [category, setCategory] = useState("DSA");
-  const [durationMin, setDurationMin] = useState<number>(60);
-  const [startTime, setStartTime] = useState("14:00");
-  const [endTime, setEndTime] = useState("15:00");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("General");
+  const [customCategory, setCustomCategory] = useState(false);
+  const [customCategoryName, setCustomCategoryName] = useState("");
+  const [startTime, setStartTime] = useState("02:00 PM");
+  const [endTime, setEndTime] = useState("03:00 PM");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
     setDate(initialEntry?.date || initialDate || new Date().toISOString().split("T")[0]);
-    setCategory(initialEntry?.category || "DSA");
-    setDurationMin(initialEntry?.durationMin || 60);
-    setStartTime(initialEntry?.startTime || "14:00");
-    setEndTime(initialEntry?.endTime || "15:00");
-    setDescription(initialEntry?.description || "");
+    setName(initialEntry?.name || "");
+    setCategory(initialEntry?.category || "General");
+    setCustomCategoryName("");
+    setStartTime(initialEntry?.startTime ? formatTime12(initialEntry.startTime) : "");
+    setEndTime(initialEntry?.endTime ? formatTime12(initialEntry.endTime) : "");
+    setCustomCategory(false);
     setErrorMsg(null);
   }, [initialDate, initialEntry, isOpen]);
 
   if (!isOpen) return null;
 
-  const categories = ["DSA", "Study", "Coding", "College", "Fitness", "Reading", "General"];
+  const categoryOptions = Array.from(new Set(["General", ...categories, category]));
+  const durationMin = calculateDuration(startTime, endTime);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!name.trim()) {
+      setErrorMsg("Name is required.");
+      return;
+    }
+    if (!durationMin) {
+      setErrorMsg("Enter valid start and end times.");
+      return;
+    }
     setIsSubmitting(true);
     setErrorMsg(null);
 
     try {
       const payload = {
         date,
-        category,
-        durationMin: Number(durationMin),
-        startTime: startTime || null,
-        endTime: endTime || null,
-        description: description || null,
+        name: name.trim(),
+        category: (customCategory ? customCategoryName : category).trim(),
+        durationMin,
+        startTime: toTime24(startTime),
+        endTime: toTime24(endTime),
       };
       if (initialEntry) {
         await api.patch(`/time-entries/${initialEntry.id}`, payload);
@@ -107,6 +157,11 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
           )}
 
           <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Name</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Focus Session" required
+              className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+          </div>
+          <div>
             <label className="block text-xs font-medium text-slate-300 mb-1">Date</label>
             <input
               type="date"
@@ -119,76 +174,47 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
 
           <div>
             <label className="block text-xs font-medium text-slate-300 mb-1">Category</label>
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {categories.map((c) => (
-                <button
-                  type="button"
-                  key={c}
-                  onClick={() => setCategory(c)}
-                  className={`px-2.5 py-1 text-xs rounded-lg transition-colors ${
-                    category === c
-                      ? "bg-emerald-600 text-white font-medium"
-                      : "bg-slate-800 text-slate-400 hover:bg-slate-700"
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              <select value={category} onChange={(e) => { setCategory(e.target.value); setCustomCategory(false); }}
+                className="min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none">
+                {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <button type="button" title="Add a new category" onClick={() => { setCustomCategory(true); setCustomCategoryName(""); }}
+                className="rounded-xl border border-slate-700 p-2 text-slate-300 hover:border-emerald-500 hover:text-emerald-400"><Plus className="h-4 w-4" /></button>
             </div>
-            <input
-              type="text"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="Or enter custom category"
-              required
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
-            />
+            {customCategory && (
+              <input type="text" value={customCategoryName} onChange={(e) => setCustomCategoryName(e.target.value)} placeholder="New category" required
+                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+            )}
           </div>
 
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Start (HH:MM)</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Start</label>
               <input
                 type="text"
-                placeholder="14:00"
+                placeholder="02:00 PM"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
                 className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm text-white font-mono focus:border-emerald-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">End (HH:MM)</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">End</label>
               <input
                 type="text"
-                placeholder="15:30"
+                placeholder="03:30 PM"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
                 className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm text-white font-mono focus:border-emerald-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Duration (Min)</label>
-              <input
-                type="number"
-                min="1"
-                max="1440"
-                value={durationMin}
-                onChange={(e) => setDurationMin(Number(e.target.value))}
-                required
+              <label className="block text-xs font-medium text-slate-300 mb-1">Duration</label>
+              <input type="text" value={formatDuration(durationMin)} readOnly
                 className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm text-white font-mono focus:border-emerald-500 focus:outline-none"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Description / Notes</label>
-            <textarea
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What did you accomplish during this session?"
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
-            />
           </div>
 
           <div className="flex gap-3 pt-2">

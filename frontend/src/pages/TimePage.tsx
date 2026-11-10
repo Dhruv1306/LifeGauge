@@ -21,8 +21,8 @@ import {
 
 interface TimeEntryItem {
   id: string;
+  name?: string;
   category: string;
-  description?: string | null;
   date: string;
   startTime?: string | null;
   endTime?: string | null;
@@ -187,6 +187,7 @@ export const TimePage: React.FC = () => {
     "Reading",
     "General",
   ];
+  const previousCategories = Array.from(new Set(entries.map((entry) => entry.category)));
 
   return (
     <div className="min-h-screen bg-slate-950 pb-16">
@@ -354,6 +355,9 @@ export const TimePage: React.FC = () => {
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2.5">
+                          <span className="text-sm font-semibold text-white">
+                            {entry.name || "Focus Session"}
+                          </span>
                           <span className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
                             {entry.category}
                           </span>
@@ -367,12 +371,6 @@ export const TimePage: React.FC = () => {
                             </span>
                           )}
                         </div>
-
-                        {entry.description && (
-                          <p className="text-xs text-slate-300">
-                            {entry.description}
-                          </p>
-                        )}
 
                         <div className="flex items-center gap-3 text-[11px] text-slate-500">
                           <span className="flex items-center gap-1 font-mono">
@@ -416,6 +414,7 @@ export const TimePage: React.FC = () => {
       <TimeLoggerModal
         isOpen={isLoggerOpen}
         initialEntry={entryToEdit}
+        categories={previousCategories}
         onClose={() => {
           setIsLoggerOpen(false);
           setEntryToEdit(null);

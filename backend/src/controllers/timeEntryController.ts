@@ -5,8 +5,8 @@ import { AuthenticatedRequest } from "../types";
 
 const createTimeEntrySchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
+  name: z.string().min(1, "Name is required").trim().default("Focus Session"),
   category: z.string().min(1, "Category is required").trim(),
-  description: z.string().optional().nullable(),
   durationMin: z.number().int().min(1, "Duration must be at least 1 minute"),
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Start time must be HH:MM").optional().nullable(),
   endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "End time must be HH:MM").optional().nullable(),
@@ -15,8 +15,8 @@ const createTimeEntrySchema = z.object({
 
 const updateTimeEntrySchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD").optional(),
+  name: z.string().min(1).trim().optional(),
   category: z.string().min(1).trim().optional(),
-  description: z.string().optional().nullable(),
   durationMin: z.number().int().min(1).optional(),
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/).optional().nullable(),
   endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/).optional().nullable(),
@@ -94,7 +94,7 @@ export async function createTimeEntry(req: AuthenticatedRequest, res: Response):
     return;
   }
 
-  const { date, category, description, durationMin, startTime, endTime, taskId } = parsed.data;
+  const { date, name, category, durationMin, startTime, endTime, taskId } = parsed.data;
 
   // If taskId provided, verify ownership
   if (taskId) {
@@ -114,8 +114,8 @@ export async function createTimeEntry(req: AuthenticatedRequest, res: Response):
     data: {
       userId,
       date,
+      name,
       category,
-      description: description || null,
       durationMin,
       startTime: startTime || null,
       endTime: endTime || null,
@@ -181,8 +181,8 @@ export async function updateTimeEntry(req: AuthenticatedRequest, res: Response):
     where: { id: entryId },
     data: {
       ...(data.date !== undefined ? { date: data.date } : {}),
+      ...(data.name !== undefined ? { name: data.name } : {}),
       ...(data.category !== undefined ? { category: data.category } : {}),
-      ...(data.description !== undefined ? { description: data.description } : {}),
       ...(data.durationMin !== undefined ? { durationMin: data.durationMin } : {}),
       ...(data.startTime !== undefined ? { startTime: data.startTime } : {}),
       ...(data.endTime !== undefined ? { endTime: data.endTime } : {}),
