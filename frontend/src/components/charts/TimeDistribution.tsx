@@ -25,8 +25,10 @@ export const TimeDistribution: React.FC<{ refreshTrigger?: number }> = ({ refres
       try {
         const today = new Date();
         const end = today.toISOString().split("T")[0];
-        const startD = new Date(today);
-        startD.setUTCDate(today.getUTCDate() - 6);
+        const day = today.getUTCDay();
+        const daysSinceMonday = day === 0 ? 6 : day - 1;
+        const startD = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+        startD.setUTCDate(startD.getUTCDate() - daysSinceMonday);
         const start = startD.toISOString().split("T")[0];
 
         const res = await api.get(`/time-entries/summary?startDate=${start}&endDate=${end}`);
@@ -64,7 +66,7 @@ export const TimeDistribution: React.FC<{ refreshTrigger?: number }> = ({ refres
       <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
         <div className="flex items-center gap-2">
           <PieChart className="h-5 w-5 text-cyan-400" />
-          <h3 className="text-base font-semibold text-white">Time Distribution (Last 7 Days)</h3>
+          <h3 className="text-base font-semibold text-white">Time Distribution (This Week)</h3>
         </div>
         <div className="flex items-center gap-1.5 text-xs font-mono font-medium text-slate-300 bg-slate-800/80 px-2.5 py-1 rounded-lg">
           <Clock className="h-3.5 w-3.5 text-emerald-400" />
@@ -74,7 +76,7 @@ export const TimeDistribution: React.FC<{ refreshTrigger?: number }> = ({ refres
 
       {!data || data.distribution.length === 0 ? (
         <div className="text-center py-8 text-xs text-slate-400">
-          No time blocks logged in the last 7 days. Click &ldquo;+ Log Block&rdquo; above to record your focus sessions.
+          No time blocks logged this week. Click &ldquo;+ Log Block&rdquo; above to record your focus sessions.
         </div>
       ) : (
         <div className="space-y-3.5">

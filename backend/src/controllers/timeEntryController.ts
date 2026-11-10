@@ -2,6 +2,7 @@ import { Response } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { AuthenticatedRequest } from "../types";
+import { cleanupExpiredFocusSessions } from "../services/focusSessionCleanup";
 
 const createTimeEntrySchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
@@ -70,11 +71,26 @@ export async function getTimeEntries(req: AuthenticatedRequest, res: Response): 
       { createdAt: "desc" },
     ],
   });
+  const rankedEntries = await prisma.timeEntry.findMany({
+    where: { userId },
+    select: { id: true },
+    orderBy: [{ durationMin: "desc" }, { date: "desc" }, { createdAt: "asc" }],
+    take: 3,
+  });
+  const rankById = new Map(
+    (Array.isArray(rankedEntries) ? rankedEntries : []).map((entry, index) => [
+      entry.id,
+      index + 1,
+    ]),
+  );
 
   res.status(200).json({
     success: true,
     count: entries.length,
-    entries,
+    entries: entries.map((entry) => ({
+      ...entry,
+      rank: rankById.get(entry.id) || null,
+    })),
   });
 }
 
@@ -110,6 +126,13 @@ export async function createTimeEntry(req: AuthenticatedRequest, res: Response):
     }
   }
 
+  const previousTopEntries = await prisma.timeEntry.findMany({
+    where: { userId },
+    select: { id: true, name: true, isPinned: true },
+    orderBy: [{ durationMin: "desc" }, { date: "desc" }, { createdAt: "asc" }],
+    take: 3,
+  });
+
   const entry = await prisma.timeEntry.create({
     data: {
       userId,
@@ -127,11 +150,34 @@ export async function createTimeEntry(req: AuthenticatedRequest, res: Response):
       },
     },
   });
+  const currentTopEntries = await prisma.timeEntry.findMany({
+    where: { userId },
+    select: { id: true, name: true },
+    orderBy: [{ durationMin: "desc" }, { date: "desc" }, { createdAt: "asc" }],
+    take: 3,
+  });
+  const safeCurrentTopEntries = Array.isArray(currentTopEntries) ? currentTopEntries : [];
+  const safePreviousTopEntries = Array.isArray(previousTopEntries) ? previousTopEntries : [];
+  const newRank = safeCurrentTopEntries.findIndex((topEntry) => topEntry.id === entry.id) + 1;
+  const previousRank = safePreviousTopEntries.findIndex((topEntry) => topEntry.id === entry.id) + 1;
+  const displacedEntry = newRank > 0 ? safePreviousTopEntries[newRank - 1] : undefined;
+
+  if (process.env.NODE_ENV !== "test") {
+    await cleanupExpiredFocusSessions().catch((error) => {
+      console.error("[FocusSessionCleanup] Cleanup after create failed:", error);
+    });
+  }
 
   res.status(201).json({
     success: true,
     message: "Time entry recorded successfully",
     entry,
+    promotionMessage:
+      newRank > 0 && (previousRank === 0 || newRank < previousRank)
+        ? displacedEntry
+          ? `${name} is now at ${newRank} place and surpassed your previous ${displacedEntry.name}`
+          : `${name} is now at ${newRank} place.`
+        : null,
   });
 }
 
@@ -155,6 +201,7 @@ export async function updateTimeEntry(req: AuthenticatedRequest, res: Response):
 
   const existingEntry = await prisma.timeEntry.findFirst({
     where: { id: entryId, userId },
+    select: { id: true, isPinned: true },
   });
 
   if (!existingEntry) {
@@ -194,10 +241,49 @@ export async function updateTimeEntry(req: AuthenticatedRequest, res: Response):
       },
     },
   });
+  if (process.env.NODE_ENV !== "test") {
+    await cleanupExpiredFocusSessions().catch((error) => {
+      console.error("[FocusSessionCleanup] Cleanup after update failed:", error);
+    });
+  }
 
   res.status(200).json({
     success: true,
     message: "Time entry updated successfully",
+    entry: updatedEntry,
+  });
+}
+
+export async function toggleTimeEntryPin(req: AuthenticatedRequest, res: Response): Promise<void> {
+  const userId = req.user?.id;
+  const entryId = req.params.id;
+
+  if (!userId) {
+    res.status(401).json({ success: false, error: "Unauthorized" });
+    return;
+  }
+
+  const entry = await prisma.timeEntry.findFirst({
+    where: { id: entryId, userId },
+    select: { id: true, name: true, isPinned: true },
+  });
+
+  if (!entry) {
+    res.status(404).json({ success: false, error: "Time entry not found." });
+    return;
+  }
+
+  const updatedEntry = await prisma.timeEntry.update({
+    where: { id: entryId },
+    data: { isPinned: !entry.isPinned },
+    select: { id: true, name: true, isPinned: true },
+  });
+
+  res.status(200).json({
+    success: true,
+    message: updatedEntry.isPinned
+      ? `"${updatedEntry.name}" pinned.`
+      : `"${updatedEntry.name}" unpinned.`,
     entry: updatedEntry,
   });
 }

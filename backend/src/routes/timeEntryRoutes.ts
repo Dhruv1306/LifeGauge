@@ -5,6 +5,7 @@ import {
   updateTimeEntry,
   deleteTimeEntry,
   getTimeSummary,
+  toggleTimeEntryPin,
 } from "../controllers/timeEntryController";
 import { requireAuth } from "../middleware/auth";
 
@@ -16,6 +17,7 @@ router.use(requireAuth);
 router.get("/", getTimeEntries);
 router.post("/", createTimeEntry);
 router.get("/summary", getTimeSummary);
+router.patch("/:id/pin", toggleTimeEntryPin);
 router.patch("/:id", updateTimeEntry);
 router.delete("/:id", deleteTimeEntry);
 

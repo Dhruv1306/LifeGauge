@@ -7,6 +7,7 @@ import { TimeDistribution } from "../components/charts/TimeDistribution";
 import { GoogleCalendarView } from "../components/calendar/GoogleCalendarView";
 import { GoogleCalendarConnect } from "../components/calendar/GoogleCalendarConnect";
 import { WindowDialogUpdation } from "../components/common/WindowDialogUpdation";
+import { TOAST_EVENT } from "../components/common/ActionToast";
 import {
   Clock,
   Plus,
@@ -17,6 +18,8 @@ import {
   CheckCircle2,
   AlertCircle,
   CalendarDays,
+  Pin,
+  Medal,
 } from "lucide-react";
 
 interface TimeEntryItem {
@@ -27,6 +30,8 @@ interface TimeEntryItem {
   startTime?: string | null;
   endTime?: string | null;
   durationMin: number;
+  isPinned: boolean;
+  rank?: number | null;
   task?: {
     id: string;
     title: string;
@@ -180,6 +185,26 @@ export const TimePage: React.FC = () => {
   const handleEditTimeEntry = (entry: TimeEntryItem) => {
     setEntryToEdit(entry);
     setIsLoggerOpen(true);
+  };
+
+  const handleTogglePin = async (entry: TimeEntryItem) => {
+    try {
+      const response = await api.patch(`/time-entries/${entry.id}/pin`);
+      const isPinned = response.data.entry?.isPinned ?? !entry.isPinned;
+      window.dispatchEvent(
+        new CustomEvent(TOAST_EVENT, {
+          detail: {
+            type: "success",
+            message: `"${entry.name || "Focus Session"}" ${
+              isPinned ? "pinned." : "unpinned."
+            }`,
+          },
+        }),
+      );
+      setRefreshKey((k) => k + 1);
+    } catch (err) {
+      console.error("Failed to update focus session pin", err);
+    }
   };
 
   const handleDisconnectCalendar = async () => {
@@ -377,6 +402,18 @@ export const TimePage: React.FC = () => {
                           <span className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
                             {entry.category}
                           </span>
+                          {entry.rank && entry.rank <= 3 && (
+                            <Medal
+                              className={`h-5 w-5 ${
+                                entry.rank === 1
+                                  ? "text-amber-400"
+                                  : entry.rank === 2
+                                    ? "text-slate-300"
+                                    : "text-orange-500"
+                              }`}
+                              aria-label={`${entry.rank}${entry.rank === 1 ? "st" : entry.rank === 2 ? "nd" : "rd"} place`}
+                            />
+                          )}
                         </div>
 
                         <div className="flex items-center gap-3 text-[11px] text-slate-500">
@@ -397,6 +434,17 @@ export const TimePage: React.FC = () => {
                       </div>
 
                       <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleTogglePin(entry)}
+                          title={entry.isPinned ? "Unpin Focus Block" : "Pin Focus Block"}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            entry.isPinned
+                              ? "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/30"
+                              : "text-slate-500 hover:text-emerald-400 hover:bg-emerald-950/30"
+                          }`}
+                        >
+                          <Pin className={`h-4 w-4 ${entry.isPinned ? "fill-current" : ""}`} />
+                        </button>
                         <button
                           onClick={() => handleEditTimeEntry(entry)}
                           title="Edit Focus Block"

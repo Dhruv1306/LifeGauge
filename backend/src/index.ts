@@ -5,6 +5,7 @@ import routes from "./routes";
 import { errorHandler } from "./middleware/errorHandler";
 import { prisma } from "./lib/prisma";
 import { startHabitLogCleanup } from "./services/habitLogCleanup";
+import { startFocusSessionCleanup } from "./services/focusSessionCleanup";
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use(errorHandler);
 // Only listen if not running in test mode
 if (process.env.NODE_ENV !== "test") {
   const habitLogCleanupTimer = startHabitLogCleanup();
+  const focusSessionCleanupTimer = startFocusSessionCleanup();
   const server = app.listen(config.port, () => {
     console.log(`[LifeGauge API] Server running on http://localhost:${config.port}`);
     console.log(`[LifeGauge API] Environment: ${config.nodeEnv}`);
@@ -43,6 +45,7 @@ if (process.env.NODE_ENV !== "test") {
     console.log(`[LifeGauge API] ${signal} received; closing server and database connections`);
     server.close(async () => {
       clearInterval(habitLogCleanupTimer);
+      clearInterval(focusSessionCleanupTimer);
       await prisma.$disconnect();
       process.exit(0);
     });

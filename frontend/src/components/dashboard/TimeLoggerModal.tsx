@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import { X, Clock, Check, Plus } from "lucide-react";
+import { TOAST_EVENT } from "../common/ActionToast";
 
 function parseTime(value: string): number | null {
   const match = value.trim().match(/^(\d{1,2}):([0-5]\d)\s*(AM|PM)$/i);
@@ -118,7 +119,14 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
       if (initialEntry) {
         await api.patch(`/time-entries/${initialEntry.id}`, payload);
       } else {
-        await api.post("/time-entries", payload);
+        const response = await api.post("/time-entries", payload);
+        if (response.data.promotionMessage) {
+          window.dispatchEvent(
+            new CustomEvent(TOAST_EVENT, {
+              detail: { type: "success", message: response.data.promotionMessage },
+            }),
+          );
+        }
       }
       onLogged();
       onClose();

@@ -130,6 +130,7 @@ model TimeEntry {
   startTime   String?  // e.g. "14:00"
   endTime     String?  // e.g. "15:30"
   durationMin Int
+  isPinned    Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -137,6 +138,7 @@ model TimeEntry {
 
   @@index([userId])
   @@index([taskId])
+  @@index([userId, isPinned])
   @@map("time_entries")
 }
 
