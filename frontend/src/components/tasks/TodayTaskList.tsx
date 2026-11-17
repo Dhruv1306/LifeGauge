@@ -47,15 +47,15 @@ export const TodayTaskList: React.FC<TodayTaskListProps> = ({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl backdrop-blur-sm">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
-        <div className="flex items-center gap-2">
-          <CheckSquare className="h-5 w-5 text-cyan-400" />
-          <h3 className="text-base font-semibold text-white">Today&apos;s Priority Tasks</h3>
+    <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-3.5 sm:p-5 shadow-xl backdrop-blur-sm">
+      <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <CheckSquare className="h-5 w-5 text-cyan-400 shrink-0" />
+          <h3 className="text-base font-semibold text-white truncate">Today&apos;s Priority Tasks</h3>
         </div>
         <button
           onClick={onOpenCreate}
-          className="flex items-center gap-1 rounded-xl bg-cyan-600 border border-cyan-700 px-3 py-1 text-xs font-semibold text-white hover:bg-cyan-500 transition-colors shadow-sm shadow-cyan-600/20 dark:bg-cyan-600/20 dark:border-cyan-500/30 dark:text-cyan-300 dark:hover:bg-cyan-600/30"
+          className="flex items-center gap-1 rounded-xl bg-cyan-600 border border-cyan-700 px-3 py-1.5 sm:py-1 text-xs font-semibold text-white hover:bg-cyan-500 transition-colors shadow-sm shadow-cyan-600/20 dark:bg-cyan-600/20 dark:border-cyan-500/30 dark:text-cyan-300 dark:hover:bg-cyan-600/30 shrink-0 whitespace-nowrap active:scale-95"
         >
           <Plus className="h-3.5 w-3.5" />
           <span>New Task</span>

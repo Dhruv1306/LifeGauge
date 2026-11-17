@@ -71,12 +71,12 @@ export const WeightsModal: React.FC<WeightsModalProps> = ({ isOpen, onClose }) =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 backdrop-blur-sm p-4 sm:items-center">
+      <div className="flex w-full max-w-md max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 p-5 sm:p-6 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3 sm:pb-4">
           <div className="flex items-center gap-2">
-            <Sliders className="h-5 w-5 text-emerald-400" />
-            <h3 className="text-lg font-semibold text-white">Productivity Weights & Target</h3>
+            <Sliders className="h-5 w-5 text-emerald-400 shrink-0" />
+            <h3 className="text-base sm:text-lg font-semibold text-white">Productivity Weights & Target</h3>
           </div>
           <button
             onClick={handleCancel}
@@ -86,7 +86,7 @@ export const WeightsModal: React.FC<WeightsModalProps> = ({ isOpen, onClose }) =
           </button>
         </div>
 
-        <form onSubmit={handleSave} className="mt-5 space-y-5">
+        <form onSubmit={handleSave} className="mt-4 min-h-0 overflow-y-auto space-y-4 sm:space-y-5">
           {errorMsg && (
             <div className="flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 p-2.5 text-xs text-rose-400">
               <AlertCircle className="h-4 w-4 shrink-0" />

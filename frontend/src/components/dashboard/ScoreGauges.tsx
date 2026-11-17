@@ -60,75 +60,77 @@ export const ScoreGauges: React.FC<ScoreGaugesProps> = ({ metrics, delta, onOpen
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {/* 1. Main Unified Daily Score Cockpit Card */}
-      <div className="daily-gauge-card rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 p-5 shadow-xl md:col-span-1 relative overflow-hidden">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <Gauge className="h-4 w-4 text-emerald-400" />
-            Daily Gauge
-          </span>
-          <span
-            className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${getTierColor(
-              tierLabel
-            )}`}
-          >
-            {tierLabel}
-          </span>
-        </div>
+      <div className="daily-gauge-card rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 p-4 sm:p-5 shadow-xl relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-medium uppercase tracking-wider text-slate-400 flex items-center gap-1.5 truncate">
+              <Gauge className="h-4 w-4 text-emerald-400 shrink-0" />
+              Daily Gauge
+            </span>
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold border shrink-0 whitespace-nowrap ${getTierColor(
+                tierLabel
+              )}`}
+            >
+              {tierLabel}
+            </span>
+          </div>
 
-        <div className="mt-4 flex items-baseline gap-2">
-          {isRestDay ? (
-            <div className="text-3xl font-extrabold text-slate-300">Rest Day</div>
-          ) : (
-            <>
-              <span className="text-4xl font-extrabold font-mono text-white tracking-tight">
-                {unifiedScore?.toFixed(1)}
-              </span>
-              <span className="text-sm font-medium text-slate-400">/ 10.0</span>
-            </>
-          )}
+          <div className="mt-3 sm:mt-4 flex items-baseline gap-2">
+            {isRestDay ? (
+              <div className="text-2xl sm:text-3xl font-extrabold text-slate-300">Rest Day</div>
+            ) : (
+              <>
+                <span className="text-3xl sm:text-4xl font-extrabold font-mono text-white tracking-tight">
+                  {unifiedScore?.toFixed(1)}
+                </span>
+                <span className="text-xs sm:text-sm font-medium text-slate-400">/ 10.0</span>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Day-over-day delta indicator */}
         <div className="mt-3 flex items-center gap-1.5 text-xs">
           {delta?.direction === "UP" ? (
-            <span className="flex items-center text-emerald-400 font-mono font-medium">
-              <TrendingUp className="h-3.5 w-3.5 mr-0.5" /> +{delta.scoreDelta} vs Yesterday
+            <span className="flex items-center text-emerald-400 font-mono font-medium truncate">
+              <TrendingUp className="h-3.5 w-3.5 mr-0.5 shrink-0" /> +{delta.scoreDelta} vs Yesterday
             </span>
           ) : delta?.direction === "DOWN" ? (
-            <span className="flex items-center text-rose-400 font-mono font-medium">
-              <TrendingDown className="h-3.5 w-3.5 mr-0.5" /> {delta.scoreDelta} vs Yesterday
+            <span className="flex items-center text-rose-400 font-mono font-medium truncate">
+              <TrendingDown className="h-3.5 w-3.5 mr-0.5 shrink-0" /> {delta.scoreDelta} vs Yesterday
             </span>
           ) : delta?.direction === "STABLE" ? (
-            <span className="flex items-center text-slate-400 font-mono">
-              <Minus className="h-3.5 w-3.5 mr-0.5" /> Stable vs Yesterday
+            <span className="flex items-center text-slate-400 font-mono truncate">
+              <Minus className="h-3.5 w-3.5 mr-0.5 shrink-0" /> Stable vs Yesterday
             </span>
           ) : (
-            <span className="text-slate-400">Personal activity indicator</span>
+            <span className="text-slate-400 truncate">Personal activity indicator</span>
           )}
         </div>
       </div>
 
       {/* 2. Tasks Metric Card */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl flex flex-col justify-between">
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 sm:p-5 shadow-xl flex flex-col justify-between">
         <div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <CheckSquare className="h-4 w-4 text-cyan-400" />
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-medium uppercase tracking-wider text-slate-400 flex items-center gap-1.5 truncate">
+              <CheckSquare className="h-4 w-4 text-cyan-400 shrink-0" />
               Task Completion
             </span>
-            <span className="text-xs font-mono text-slate-400">
+            <span className="text-xs font-mono text-slate-400 shrink-0">
               {metrics.tasksCompleted} / {metrics.tasksTotal}
             </span>
           </div>
 
-          <div className="mt-3 flex items-baseline justify-between">
-            <span className="text-3xl font-bold font-mono text-white">
+          <div className="mt-3 flex flex-wrap items-baseline justify-between gap-1">
+            <span className="text-2xl sm:text-3xl font-bold font-mono text-white">
               {moduleScores.taskCompletionRate}%
             </span>
             {metrics.highPriorityTotal > 0 && (
-              <span className="rounded-md bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-[11px] font-mono text-amber-400">
+              <span className="rounded-md bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-[10px] sm:text-[11px] font-mono text-amber-400 shrink-0">
                 High: {moduleScores.highPriorityRate}% ({metrics.highPriorityCompleted}/{metrics.highPriorityTotal})
               </span>
             )}
@@ -144,23 +146,23 @@ export const ScoreGauges: React.FC<ScoreGaugesProps> = ({ metrics, delta, onOpen
       </div>
 
       {/* 3. Focus / Time Metric Card */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl flex flex-col justify-between">
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 sm:p-5 shadow-xl flex flex-col justify-between">
         <div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <Clock className="h-4 w-4 text-emerald-400" />
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-medium uppercase tracking-wider text-slate-400 flex items-center gap-1.5 truncate">
+              <Clock className="h-4 w-4 text-emerald-400 shrink-0" />
               Focus Time
             </span>
             <button
               onClick={onOpenTimeLogger}
-              className="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium underline"
+              className="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium underline shrink-0"
             >
               + Log Block
             </button>
           </div>
 
-          <div className="mt-3 flex items-baseline justify-between">
-            <span className="text-3xl font-bold font-mono text-white">
+          <div className="mt-3 flex flex-wrap items-baseline justify-between gap-1">
+            <span className="text-2xl sm:text-3xl font-bold font-mono text-white">
               {(metrics.focusMinutes / 60).toFixed(1)}h
             </span>
             <span className="text-xs text-slate-400 font-mono">
@@ -178,20 +180,20 @@ export const ScoreGauges: React.FC<ScoreGaugesProps> = ({ metrics, delta, onOpen
       </div>
 
       {/* 4. Habit Consistency Card */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl flex flex-col justify-between">
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 sm:p-5 shadow-xl flex flex-col justify-between">
         <div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <Flame className="h-4 w-4 text-amber-400" />
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-medium uppercase tracking-wider text-slate-400 flex items-center gap-1.5 truncate">
+              <Flame className="h-4 w-4 text-amber-400 shrink-0" />
               Habit Consistency
             </span>
-            <span className="text-xs font-mono text-slate-400">
+            <span className="text-xs font-mono text-slate-400 shrink-0">
               {metrics.habitsCompleted} / {metrics.habitsScheduled} Done
             </span>
           </div>
 
-          <div className="mt-3 flex items-baseline justify-between">
-            <span className="text-3xl font-bold font-mono text-white">
+          <div className="mt-3 flex flex-wrap items-baseline justify-between gap-1">
+            <span className="text-2xl sm:text-3xl font-bold font-mono text-white">
               {metrics.habitsScheduled > 0 ? `${moduleScores.habitConsistency}%` : "No Habits Today"}
             </span>
             {metrics.habitsScheduled === 0 && (

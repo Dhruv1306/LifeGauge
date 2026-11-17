@@ -85,22 +85,21 @@ export const TasksPage: React.FC = () => {
     <div className="min-h-screen bg-slate-950 pb-16">
       <Navbar />
 
-      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+      <main className="mx-auto max-w-6xl px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-slate-800 pb-4">
           <div>
-            <h1 className="text-xl font-bold text-white flex items-center gap-2">
-              <CheckSquare className="h-6 w-6 text-cyan-400" />
-              Tasks & Priorities
+            <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+              <CheckSquare className="h-6 w-6 text-cyan-400 shrink-0" />
+              <span>Tasks & Priorities</span>
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Organize scheduled work, set priority weightings, and track
-              execution.
+              Organize scheduled work, set priority weightings, and track execution.
             </p>
           </div>
 
           <button
             onClick={() => setIsCreateOpen(true)}
-            className="flex items-center gap-1.5 self-start sm:self-auto rounded-xl bg-cyan-600 px-4 py-2 text-xs font-semibold text-white hover:bg-cyan-500 transition-colors shadow-lg shadow-cyan-600/20"
+            className="flex items-center justify-center gap-1.5 w-full sm:w-auto rounded-xl bg-cyan-600 px-4 py-2.5 sm:py-2 text-xs font-semibold text-white hover:bg-cyan-500 transition-colors shadow-lg shadow-cyan-600/20 active:scale-95"
           >
             <Plus className="h-4 w-4" />
             <span>Create Task</span>
@@ -108,8 +107,8 @@ export const TasksPage: React.FC = () => {
         </div>
 
         {/* Filters bar */}
-        <div className="flex flex-wrap items-center gap-3 bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
-          <div className="relative flex-1 min-w-[200px]">
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3 bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
+          <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
             <input
               type="text"
@@ -120,35 +119,37 @@ export const TasksPage: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <Filter className="h-3.5 w-3.5 text-slate-400" />
-            <div className="flex rounded-xl bg-slate-800 p-0.5 text-xs">
-              {(["all", "active", "completed"] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setStatusFilter(s)}
-                  className={`px-3 py-1 rounded-lg capitalize transition-colors ${
-                    statusFilter === s
-                      ? "bg-cyan-600 text-white font-medium"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  {s}
-                </button>
-              ))}
+          <div className="flex items-center justify-between sm:justify-start gap-2">
+            <div className="flex items-center gap-1.5">
+              <Filter className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <div className="flex rounded-xl bg-slate-800 p-0.5 text-xs">
+                {(["all", "active", "completed"] as const).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setStatusFilter(s)}
+                    className={`px-2.5 sm:px-3 py-1 rounded-lg capitalize transition-colors text-xs ${
+                      statusFilter === s
+                        ? "bg-cyan-600 text-white font-medium"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <select
-            value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-300 focus:outline-none"
-          >
-            <option value="all">All Priorities</option>
-            <option value="HIGH">High Priority</option>
-            <option value="MEDIUM">Medium Priority</option>
-            <option value="LOW">Low Priority</option>
-          </select>
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              className="rounded-xl border border-slate-700 bg-slate-800 px-2.5 sm:px-3 py-1.5 text-xs text-slate-300 focus:outline-none"
+            >
+              <option value="all">All Priorities</option>
+              <option value="HIGH">High Priority</option>
+              <option value="MEDIUM">Medium Priority</option>
+              <option value="LOW">Low Priority</option>
+            </select>
+          </div>
         </div>
 
         {/* Task List */}
@@ -165,13 +166,13 @@ export const TasksPage: React.FC = () => {
             {tasks.map((task) => (
               <div
                 key={task.id}
-                className={`task-row flex items-start justify-between p-4 rounded-2xl border transition-all ${
+                className={`task-row flex flex-col sm:flex-row sm:items-start justify-between p-3.5 sm:p-4 rounded-2xl border transition-all gap-2.5 sm:gap-4 ${
                   task.isCompleted
                     ? "bg-slate-900/80 border-slate-800"
                     : "bg-slate-900/80 border-slate-800 hover:border-slate-700"
                 }`}
               >
-                <div className="flex min-w-0 items-start gap-3.5">
+                <div className="flex min-w-0 items-start gap-3 sm:gap-3.5">
                   <button
                     onClick={() => handleToggle(task)}
                     className={`mt-0.5 flex h-5 w-5 min-w-5 shrink-0 items-center justify-center rounded-lg border transition-colors ${
@@ -185,9 +186,9 @@ export const TasksPage: React.FC = () => {
                     )}
                   </button>
 
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <h3
-                      className={`text-sm font-medium ${
+                      className={`text-sm font-medium break-words ${
                         task.isCompleted
                           ? "line-through text-slate-400"
                           : "text-white"
@@ -196,7 +197,7 @@ export const TasksPage: React.FC = () => {
                       {task.title}
                     </h3>
                     {task.description && (
-                      <p className="text-xs text-slate-400 mt-1">
+                      <p className="text-xs text-slate-400 mt-1 line-clamp-2">
                         {task.description}
                       </p>
                     )}
@@ -208,9 +209,9 @@ export const TasksPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center justify-end gap-1.5 self-end sm:self-start shrink-0">
                   <span
-                    className={`text-[10px] font-mono px-2 py-0.5 rounded-md border font-semibold mr-1.5 ${
+                    className={`text-[10px] font-mono px-2 py-0.5 rounded-md border font-semibold mr-1 shrink-0 ${
                       priorityStyles[task.priority]
                     }`}
                   >

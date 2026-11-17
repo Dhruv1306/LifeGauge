@@ -92,21 +92,21 @@ export const StockMomentum: React.FC<StockMomentumProps> = ({ refreshTrigger }) 
   const isFalling = momentumDelta < 0;
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl backdrop-blur-sm">
+    <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-3.5 sm:p-5 shadow-xl backdrop-blur-sm">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {isRising ? (
-              <TrendingUp className="h-5 w-5 text-emerald-400" />
+              <TrendingUp className="h-5 w-5 text-emerald-400 shrink-0" />
             ) : isFalling ? (
-              <TrendingDown className="h-5 w-5 text-rose-400" />
+              <TrendingDown className="h-5 w-5 text-rose-400 shrink-0" />
             ) : (
-              <Minus className="h-5 w-5 text-slate-400" />
+              <Minus className="h-5 w-5 text-slate-400 shrink-0" />
             )}
             <h3 className="text-base font-semibold text-white">Stock-Style Momentum Trajectory</h3>
             <span
-              className={`rounded-md px-2 py-0.5 text-[11px] font-mono font-medium flex items-center gap-1 ${
+              className={`rounded-md px-2 py-0.5 text-[10px] sm:text-[11px] font-mono font-medium flex items-center gap-1 shrink-0 ${
                 isRising
                   ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                   : isFalling
@@ -117,12 +117,12 @@ export const StockMomentum: React.FC<StockMomentumProps> = ({ refreshTrigger }) 
               {isRising ? `+${momentumDelta} vs Yesterday` : isFalling ? `${momentumDelta} vs Yesterday` : "Stable"}
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-400 mt-0.5 line-clamp-2 sm:line-clamp-none">
             Day-over-day productivity momentum with baseline progress indicators.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+        <div className="flex items-center gap-2 justify-between sm:justify-end">
           {/* Days Filter */}
           <div className="flex rounded-lg bg-slate-800/80 p-0.5 text-xs">
             {[7, 14, 30].map((d) => (

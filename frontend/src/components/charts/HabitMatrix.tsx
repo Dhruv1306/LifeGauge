@@ -235,30 +235,30 @@ export const HabitMatrix: React.FC<HabitMatrixProps> = ({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl backdrop-blur-sm transition-colors">
+    <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-3.5 sm:p-5 shadow-xl backdrop-blur-sm transition-colors">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 border-b border-slate-800 pb-3">
         <div>
-          <div className="flex items-center gap-2">
-            <Flame className="h-5 w-5 text-amber-400" />
+          <div className="flex flex-wrap items-center gap-2">
+            <Flame className="h-5 w-5 text-amber-400 shrink-0" />
             <h3 className="text-base font-semibold text-white">
               Habit Matrix
             </h3>
-            <span className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[11px] font-mono font-medium text-amber-500 border border-amber-500/20">
+            <span className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] sm:text-[11px] font-mono font-medium text-amber-500 border border-amber-500/20 whitespace-nowrap">
               The Mirror of Your Dedication
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-400 mt-0.5 line-clamp-2 sm:line-clamp-none">
             The Person You want to become depends on the <strong>people you spend time with and the habits you start...</strong>
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
+        <div className="flex items-center gap-2 justify-between sm:justify-end flex-wrap">
           {/* 3 View Mode Toggle Buttons */}
           <div className="flex rounded-lg bg-slate-800/80 p-0.5 text-xs">
             <button
               onClick={() => setViewMode("14")}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
+              className={`px-2 sm:px-2.5 py-1 rounded-md transition-colors ${
                 viewMode === "14"
                   ? "bg-emerald-600 text-white font-medium"
                   : "text-slate-400 hover:text-white"
@@ -268,7 +268,7 @@ export const HabitMatrix: React.FC<HabitMatrixProps> = ({
             </button>
             <button
               onClick={() => setViewMode("21")}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
+              className={`px-2 sm:px-2.5 py-1 rounded-md transition-colors ${
                 viewMode === "21"
                   ? "bg-emerald-600 text-white font-medium"
                   : "text-slate-400 hover:text-white"
@@ -278,7 +278,7 @@ export const HabitMatrix: React.FC<HabitMatrixProps> = ({
             </button>
             <button
               onClick={() => setViewMode("monthly")}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
+              className={`px-2 sm:px-2.5 py-1 rounded-md transition-colors ${
                 viewMode === "monthly"
                   ? "bg-emerald-600 text-white font-medium"
                   : "text-slate-400 hover:text-white"
@@ -289,7 +289,7 @@ export const HabitMatrix: React.FC<HabitMatrixProps> = ({
           </div>
 
           {data && !data.isPreRegistration && (
-            <div className="rounded-lg bg-slate-800/60 px-2.5 py-1 text-xs font-mono font-semibold text-emerald-400 border border-slate-700/50">
+            <div className="rounded-lg bg-slate-800/60 px-2.5 py-1 text-xs font-mono font-semibold text-emerald-400 border border-slate-700/50 whitespace-nowrap">
               {data.summary.consistencyRate}% Consistency
             </div>
           )}
@@ -410,19 +410,19 @@ export const HabitMatrix: React.FC<HabitMatrixProps> = ({
         </div>
       ) : (
         /* Grid Container */
-        <div className="grid grid-cols-[176px_minmax(0,1fr)]">
+        <div className="grid grid-cols-[120px_minmax(0,1fr)] sm:grid-cols-[176px_minmax(0,1fr)]">
           {/* Habits Title Column */}
           <div className="min-w-0">
-            <div className="flex h-[42px] items-center px-3 text-xs font-medium text-slate-400 border-b border-slate-800/60">
+            <div className="flex h-[42px] items-center px-2 sm:px-3 text-[11px] sm:text-xs font-medium text-slate-400 border-b border-slate-800/60 truncate">
               Habits / Routine
             </div>
             <div className="divide-y divide-slate-800/60">
               {data.habits.map((habit) => (
                 <div
                   key={habit.id}
-                  className="flex h-[44px] items-center px-3 text-xs font-medium text-slate-200"
+                  className="flex h-[44px] items-center px-2 sm:px-3 text-xs font-medium text-slate-200"
                 >
-                  <div className="truncate" title={habit.title}>
+                  <div className="truncate text-[11px] sm:text-xs" title={habit.title}>
                     {habit.title}
                   </div>
                 </div>
@@ -575,31 +575,31 @@ export const HabitMatrix: React.FC<HabitMatrixProps> = ({
       )}
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center justify-end gap-4 pt-3 text-[11px] text-slate-400 border-t border-slate-800/60">
-        <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center justify-start sm:justify-end gap-2.5 sm:gap-4 pt-3 text-[10px] sm:text-[11px] text-slate-400 border-t border-slate-800/60">
+        <div className="flex items-center gap-1.5 shrink-0">
           <span className="habit-matrix-cell matrix-completed h-3.5 w-3.5 rounded-md bg-emerald-500 shadow-sm shadow-emerald-500/30 flex items-center justify-center text-slate-950">
             <Check className="h-2.5 w-2.5 stroke-[3]" />
           </span>
           <span>Completed</span>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           <span className="habit-matrix-cell matrix-missed h-3.5 w-3.5 rounded-md bg-rose-950/70 border border-rose-800/80 flex items-center justify-center text-rose-400">
             <X className="h-2.5 w-2.5 stroke-[2.5]" />
           </span>
           <span>Missed</span>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           <span className="habit-matrix-rest h-3.5 w-3.5 flex items-center justify-center text-slate-600">
             &bull;
           </span>
           <span>Rest / Unscheduled</span>
         </div>
         {viewMode === "monthly" && (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
             <span className="habit-matrix-outside h-3.5 w-3.5 rounded-md border border-dashed border-slate-700 bg-slate-800/30 flex items-center justify-center text-slate-500 font-mono text-[10px]">
               &ndash;
             </span>
-            <span>Outside Tracking Period</span>
+            <span>Outside Tracking</span>
           </div>
         )}
       </div>

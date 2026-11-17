@@ -61,12 +61,12 @@ export const DashboardPage: React.FC = () => {
     <div className="min-h-screen bg-olive-50 dark:bg-slate-950 pb-16 transition-colors duration-200">
       <Navbar />
 
-      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+      <main className="mx-auto max-w-6xl px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-4 sm:space-y-6">
         {/* Cockpit Date Bar & Quick Actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/90 dark:bg-slate-900/60 p-4 rounded-2xl border border-olive-200 dark:border-slate-800 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 rounded-xl bg-olive-100/70 dark:bg-slate-800/80 px-3 py-1.5 border border-olive-300 dark:border-slate-700/60">
-              <Calendar className="h-4 w-4 text-olive-700 dark:text-emerald-400" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white/90 dark:bg-slate-900/60 p-3 sm:p-4 rounded-2xl border border-olive-200 dark:border-slate-800 shadow-sm">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 rounded-xl bg-olive-100/70 dark:bg-slate-800/80 px-2.5 sm:px-3 py-1.5 border border-olive-300 dark:border-slate-700/60">
+              <Calendar className="h-4 w-4 text-olive-700 dark:text-emerald-400 shrink-0" />
               <input
                 type="date"
                 value={selectedDate}
@@ -76,13 +76,13 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {isToday ? (
-              <span className="rounded-full bg-olive-200/80 dark:bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-olive-800 dark:text-emerald-400 border border-olive-300 dark:border-emerald-500/20">
+              <span className="rounded-full bg-olive-200/80 dark:bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-olive-800 dark:text-emerald-400 border border-olive-300 dark:border-emerald-500/20 whitespace-nowrap">
                 Today&apos;s Focus
               </span>
             ) : (
               <button
                 onClick={() => setSelectedDate(new Date().toISOString().split("T")[0])}
-                className="text-xs text-olive-600 dark:text-slate-400 hover:text-olive-900 dark:hover:text-emerald-400 underline"
+                className="text-xs text-olive-600 dark:text-slate-400 hover:text-olive-900 dark:hover:text-emerald-400 underline whitespace-nowrap"
               >
                 Jump to Today
               </button>
@@ -101,15 +101,15 @@ export const DashboardPage: React.FC = () => {
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setIsTimeModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl bg-emerald-600 border border-emerald-700 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-500 dark:bg-emerald-600/20 dark:border-emerald-500/30 dark:text-emerald-300 dark:hover:bg-emerald-600/30 transition-colors shadow-sm"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 border border-emerald-700 px-3 py-2 sm:py-1.5 text-xs font-medium text-white hover:bg-emerald-500 dark:bg-emerald-600/20 dark:border-emerald-500/30 dark:text-emerald-300 dark:hover:bg-emerald-600/30 transition-colors shadow-sm whitespace-nowrap active:scale-95"
             >
               <Clock className="h-3.5 w-3.5" />
-              <span>Log Time Block</span>
+              <span>Log Time</span>
             </button>
 
             <button
               onClick={() => setIsTaskModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl bg-cyan-600 border border-cyan-700 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-cyan-500 dark:bg-cyan-600/20 dark:border-cyan-500/30 dark:text-cyan-300 dark:hover:bg-cyan-600/30 transition-colors shadow-sm"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-xl bg-cyan-600 border border-cyan-700 px-3 py-2 sm:py-1.5 text-xs font-medium text-white hover:bg-cyan-500 dark:bg-cyan-600/20 dark:border-cyan-500/30 dark:text-cyan-300 dark:hover:bg-cyan-600/30 transition-colors shadow-sm whitespace-nowrap active:scale-95"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>New Task</span>
@@ -117,7 +117,7 @@ export const DashboardPage: React.FC = () => {
 
             <button
               onClick={() => setIsHabitModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl bg-amber-600 border border-amber-700 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-amber-500 dark:bg-amber-600/20 dark:border-amber-500/30 dark:text-amber-300 dark:hover:bg-amber-600/30 transition-colors shadow-sm"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-xl bg-amber-600 border border-amber-700 px-3 py-2 sm:py-1.5 text-xs font-medium text-white hover:bg-amber-500 dark:bg-amber-600/20 dark:border-amber-500/30 dark:text-amber-300 dark:hover:bg-amber-600/30 transition-colors shadow-sm whitespace-nowrap active:scale-95"
             >
               <Flame className="h-3.5 w-3.5" />
               <span>New Habit</span>
@@ -133,8 +133,8 @@ export const DashboardPage: React.FC = () => {
         />
 
         {/* 2. Primary Custom Visualizations */}
-        <div className="space-y-6">
-          {/* Visual 1: Habit Punchcard Matrix (LeetCode / GitHub style) */}
+        <div className="space-y-4 sm:space-y-6">
+          {/* Visual 1: Habit Punchcard Matrix */}
           <HabitMatrix onHabitToggled={triggerGlobalRefresh} />
 
           {/* Visual 2: Stock-Style Momentum Trajectory Area Chart */}
@@ -142,7 +142,7 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* 3. Lower Row: Time Distribution & Today's Task Manager */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <TodayTaskList
             tasks={tasks}
             onTaskUpdated={triggerGlobalRefresh}

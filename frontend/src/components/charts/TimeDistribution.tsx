@@ -62,15 +62,15 @@ export const TimeDistribution: React.FC<{ refreshTrigger?: number }> = ({ refres
   ];
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl backdrop-blur-sm">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+    <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-3.5 sm:p-5 shadow-xl backdrop-blur-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3 mb-4">
         <div className="flex items-center gap-2">
-          <PieChart className="h-5 w-5 text-cyan-400" />
+          <PieChart className="h-5 w-5 text-cyan-400 shrink-0" />
           <h3 className="text-base font-semibold text-white">Time Distribution (This Week)</h3>
         </div>
-        <div className="flex items-center gap-1.5 text-xs font-mono font-medium text-slate-300 bg-slate-800/80 px-2.5 py-1 rounded-lg">
-          <Clock className="h-3.5 w-3.5 text-emerald-400" />
-          {data?.totalHours || 0} Hours Logged
+        <div className="flex items-center gap-1.5 text-xs font-mono font-medium text-slate-300 bg-slate-800/80 px-2.5 py-1 rounded-lg w-fit">
+          <Clock className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+          <span>{data?.totalHours || 0} Hours Logged</span>
         </div>
       </div>
 

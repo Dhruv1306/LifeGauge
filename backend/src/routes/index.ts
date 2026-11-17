@@ -5,7 +5,6 @@ import taskRoutes from "./taskRoutes";
 import habitRoutes from "./habitRoutes";
 import timeEntryRoutes from "./timeEntryRoutes";
 import analyticsRoutes from "./analyticsRoutes";
-import calendarRoutes from "./calendarRoutes";
 
 const router = Router();
 
@@ -23,6 +22,5 @@ router.use("/tasks", taskRoutes);
 router.use("/habits", habitRoutes);
 router.use("/time-entries", timeEntryRoutes);
 router.use("/analytics", analyticsRoutes);
-router.use("/calendar", calendarRoutes);
 
 export default router;

@@ -19,83 +19,80 @@ export const LandingPage: React.FC = () => {
     <div className="min-h-screen bg-olive-50 dark:bg-slate-950 text-olive-800 dark:text-slate-100 selection:bg-olive-600 dark:selection:bg-emerald-500 selection:text-white dark:selection:text-slate-950 transition-colors duration-200">
       {/* Navigation Header */}
       <header className="sticky top-0 z-50 border-b border-olive-200 dark:border-slate-800/80 bg-olive-50/90 dark:bg-slate-950/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
-          <Link to="/" className="flex items-center gap-2.5">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-6 lg:px-8 h-16 gap-2">
+          <Link to="/" className="flex items-center gap-2 group shrink-0">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-md shadow-emerald-500/20">
               <Gauge className="h-5 w-5 text-slate-950" />
             </div>
             <div className="flex flex-col">
-              <span className="text-lg font-bold tracking-tight text-[var(--text-primary)] flex items-center">
+              <span className="text-base sm:text-lg font-bold tracking-tight text-[var(--text-primary)] flex items-center">
                 Life<span className="text-emerald-600 dark:text-emerald-400 font-bold">Gauge</span>
               </span>
-              {/* <span className="text-[10px] uppercase font-mono tracking-widest text-[var(--text-muted)] -mt-1">
-                Analytics Cockpit
-              </span> */}
             </div>
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <FullscreenToggle />
             <ThemeDropdown />
             <Link
               to="/login"
-              className="rounded-xl border border-olive-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 px-4 py-2 text-xs font-semibold text-olive-800 dark:text-slate-200 hover:border-olive-300 dark:hover:border-slate-700 hover:bg-olive-100 dark:hover:bg-slate-800 transition-all shadow-sm"
+              className="rounded-xl border border-olive-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold text-olive-800 dark:text-slate-200 hover:border-olive-300 dark:hover:border-slate-700 hover:bg-olive-100 dark:hover:bg-slate-800 transition-all shadow-sm whitespace-nowrap"
             >
               Sign In
             </Link>
             <Link
               to="/register"
-              className="flex items-center gap-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 dark:bg-gradient-to-r dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 text-white dark:text-slate-950 px-4 py-2 text-xs font-semibold transition-all shadow-md shadow-emerald-500/20 dark:shadow-emerald-500/20"
+              className="flex items-center gap-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 dark:bg-gradient-to-r dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 text-white dark:text-slate-950 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold transition-all shadow-md shadow-emerald-500/20 whitespace-nowrap active:scale-95"
             >
               <span>Get Started</span>
-              <ArrowRight className="h-3.5 w-3.5" />
+              <ArrowRight className="h-3.5 w-3.5 hidden xs:inline" />
             </Link>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-20 pb-24 md:pt-28 md:pb-32">
+      <section className="relative overflow-hidden pt-12 pb-16 sm:pt-20 sm:pb-24 md:pt-28 md:pb-32">
         {/* Glow ambient background */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[450px] w-[650px] rounded-full bg-olive-400/20 dark:bg-emerald-500/10 blur-[130px] pointer-events-none" />
-        <div className="absolute top-1/3 right-1/4 h-[350px] w-[450px] rounded-full bg-olive-500/15 dark:bg-cyan-500/10 blur-[110px] pointer-events-none" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[300px] sm:h-[450px] w-[300px] sm:w-[650px] rounded-full bg-olive-400/20 dark:bg-emerald-500/10 blur-[90px] sm:blur-[130px] pointer-events-none" />
+        <div className="absolute top-1/3 right-1/4 h-[200px] sm:h-[350px] w-[200px] sm:w-[450px] rounded-full bg-olive-500/15 dark:bg-cyan-500/10 blur-[80px] sm:blur-[110px] pointer-events-none" />
 
-        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-olive-300 dark:border-emerald-500/30 bg-olive-100 dark:bg-emerald-500/10 px-3.5 py-1 text-xs font-medium text-olive-800 dark:text-emerald-300 mb-6 backdrop-blur-sm">
-            <Sparkles className="h-3.5 w-3.5 text-olive-600 dark:text-emerald-400" />
-            <span>Personal Productivity & Life Analytics Cockpit</span>
+        <div className="relative mx-auto max-w-5xl px-3 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-olive-300 dark:border-emerald-500/30 bg-olive-100 dark:bg-emerald-500/10 px-3 py-1 text-xs font-medium text-olive-800 dark:text-emerald-300 mb-6 backdrop-blur-sm max-w-full">
+            <Sparkles className="h-3.5 w-3.5 text-olive-600 dark:text-emerald-400 shrink-0" />
+            <span className="truncate">Personal Productivity & Life Analytics Cockpit</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-olive-900 dark:text-white leading-tight">
+          <h1 className="text-3xl xs:text-4xl sm:text-6xl font-extrabold tracking-tight text-olive-900 dark:text-white leading-tight">
             Understand where your time went.{" "}
             <span className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 dark:from-emerald-400 dark:via-teal-300 dark:to-cyan-400 bg-clip-text text-transparent">
               Track growth transparently.
             </span>
           </h1>
 
-          <p className="mx-auto mt-6 max-w-2xl text-base sm:text-lg text-olive-700 dark:text-slate-400 leading-relaxed">
+          <p className="mx-auto mt-4 sm:mt-6 max-w-2xl text-sm sm:text-lg text-olive-700 dark:text-slate-400 leading-relaxed">
             LifeGauge unifies tasks, priority deadlines, focus sessions, and daily habits into one central cockpit.
             It transforms daily actions into deterministic, auditable metrics and visual momentum trends—not arbitrary scores.
           </p>
 
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full max-w-md mx-auto sm:max-w-none">
             <Link
               to="/register"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 dark:bg-gradient-to-r dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 px-8 py-3.5 text-sm font-bold text-white dark:text-slate-950 shadow-xl shadow-emerald-500/25 dark:shadow-emerald-500/25 transition-all hover:scale-[1.02]"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 dark:bg-gradient-to-r dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 px-6 sm:px-8 py-3 sm:py-3.5 text-sm font-bold text-white dark:text-slate-950 shadow-xl shadow-emerald-500/25 transition-all hover:scale-[1.02] active:scale-95"
             >
               <span>Create Free Account</span>
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               to="/login"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-2xl border border-olive-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 px-8 py-3.5 text-sm font-semibold text-olive-800 dark:text-slate-200 hover:border-olive-300 dark:hover:border-slate-700 hover:bg-olive-100 dark:hover:bg-slate-800 transition-all shadow-sm"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-2xl border border-olive-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 px-6 sm:px-8 py-3 sm:py-3.5 text-sm font-semibold text-olive-800 dark:text-slate-200 hover:border-olive-300 dark:hover:border-slate-700 hover:bg-olive-100 dark:hover:bg-slate-800 transition-all shadow-sm active:scale-95"
             >
               <span>Sign In to Cockpit</span>
             </Link>
           </div>
 
           {/* Quick Metrics Badge Row */}
-          <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto text-left">
+          <div className="mt-10 sm:mt-14 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto text-left">
             <div className="rounded-2xl border border-olive-200 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/50 p-4 backdrop-blur-sm shadow-sm">
               <div className="text-olive-700 dark:text-emerald-400 text-xs font-mono font-semibold uppercase">Pillar 1</div>
               <div className="text-base font-bold text-olive-900 dark:text-white mt-1">Task Completion</div>

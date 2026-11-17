@@ -71,14 +71,14 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-olive-50 dark:bg-slate-950 p-4 transition-colors duration-200">
+    <div className="min-h-screen flex items-center justify-center bg-olive-50 dark:bg-slate-950 p-3 sm:p-4 transition-colors duration-200">
       {/* Background ambient glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-olive-400/20 dark:bg-emerald-500/10 blur-3xl" />
         <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-olive-500/15 dark:bg-cyan-500/10 blur-3xl" />
       </div>
 
-      <div className="relative w-full max-w-md rounded-3xl border border-olive-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 p-8 shadow-2xl backdrop-blur-xl">
+      <div className="relative w-full max-w-md rounded-3xl border border-olive-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 p-5 sm:p-8 shadow-2xl backdrop-blur-xl">
         {/* Header navigation bar */}
         <div className="flex items-center justify-between mb-6">
           <Link
@@ -88,7 +88,7 @@ export const RegisterPage: React.FC = () => {
             <ArrowLeft className="h-3.5 w-3.5" />
             <span>Back to LifeGauge</span>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <FullscreenToggle />
             <ThemeDropdown />
           </div>

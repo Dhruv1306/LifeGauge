@@ -135,12 +135,12 @@ export const HabitsPage: React.FC = () => {
     <div className="min-h-screen bg-slate-950 pb-16">
       <Navbar />
 
-      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+      <main className="mx-auto max-w-6xl px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-slate-800 pb-4">
           <div>
-            <h1 className="text-xl font-bold text-white flex items-center gap-2">
-              <Flame className="h-6 w-6 text-amber-400" />
-              Habits & Consistency Matrix
+            <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+              <Flame className="h-6 w-6 text-amber-400 shrink-0" />
+              <span>Habits & Consistency Matrix</span>
             </h1>
             <p className="text-xs text-slate-400 mt-1">
               Build daily momentum and review your routines on the punchcard grid.
@@ -149,7 +149,7 @@ export const HabitsPage: React.FC = () => {
 
           <button
             onClick={() => setIsCreateOpen(true)}
-            className="flex items-center gap-1.5 self-start sm:self-auto rounded-xl bg-amber-600 px-4 py-2 text-xs font-semibold text-white hover:bg-amber-500 transition-colors shadow-lg shadow-amber-600/20"
+            className="flex items-center justify-center gap-1.5 w-full sm:w-auto rounded-xl bg-amber-600 px-4 py-2.5 sm:py-2 text-xs font-semibold text-white hover:bg-amber-500 transition-colors shadow-lg shadow-amber-600/20 active:scale-95"
           >
             <Plus className="h-4 w-4" />
             <span>New Habit</span>
@@ -160,9 +160,9 @@ export const HabitsPage: React.FC = () => {
         <HabitMatrix refreshTrigger={refreshKey} />
 
         {/* Habit Lists */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="flex rounded-xl border border-slate-800 bg-slate-900/80 p-1">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-3.5 sm:p-5 shadow-xl">
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex rounded-xl border border-slate-800 bg-slate-900/80 p-1 w-fit">
               <button
                 type="button"
                 onClick={() => setHabitView("configured")}
@@ -187,10 +187,10 @@ export const HabitsPage: React.FC = () => {
               </button>
             </div>
             {habitView === "configured" && (
-            <p className="mb-3 text-[11px] text-slate-400">
-              Drag handles to reorder
-            </p>
-          )}
+              <p className="text-[11px] text-slate-400">
+                Drag handles to reorder
+              </p>
+            )}
           </div>
 
           {(habitView === "configured" ? habits : completedHabits).length === 0 ? (
@@ -208,32 +208,32 @@ export const HabitsPage: React.FC = () => {
                   onDragStart={habitView === "configured" ? (e) => handleDragStart(e, index) : undefined}
                   onDragOver={habitView === "configured" ? handleDragOver : undefined}
                   onDrop={habitView === "configured" ? (e) => handleDrop(e, index) : undefined}
-                  className={`configured-habit-row py-3 flex items-center justify-between gap-3 transition-colors ${
+                  className={`configured-habit-row py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 transition-colors ${
                     draggedIndex === index
                       ? "opacity-40 bg-slate-800/40 rounded-xl px-2"
                       : "hover:bg-slate-800/20 px-2 rounded-xl"
                   }`}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-start sm:items-center gap-2.5 sm:gap-3 min-w-0">
                     {/* Drag Handle */}
                     {habitView === "configured" ? (
                       <div
-                        className="cursor-grab active:cursor-grabbing p-1 text-slate-500 hover:text-slate-300"
+                        className="cursor-grab active:cursor-grabbing p-1 text-slate-500 hover:text-slate-300 mt-0.5 sm:mt-0 shrink-0"
                         title="Drag to reorder"
                       >
                         <GripVertical className="h-4 w-4" />
                       </div>
                     ) : (
-                      <div className="w-6 shrink-0" aria-hidden="true" />
+                      <div className="w-5 sm:w-6 shrink-0" aria-hidden="true" />
                     )}
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 min-w-0">
-                        <h4 className="text-sm font-medium text-white truncate">
+                        <h4 className="text-sm font-medium text-white break-words">
                           {habit.title}
                         </h4>
                       </div>
-                      <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono text-slate-400 mt-0.5">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] font-mono text-slate-400 mt-0.5">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3 text-amber-400" />
                           {formatTargetDays(habit.targetDays)}
@@ -251,9 +251,9 @@ export const HabitsPage: React.FC = () => {
                         {habit.periods && habit.periods.length > 0 && (
                           <div className="basis-full mt-1">
                             <div className="text-slate-500">Previous working:</div>
-                            <ol className="list-decimal pl-6 text-slate-500">
+                            <ol className="list-decimal pl-5 sm:pl-6 text-slate-500">
                               {habit.periods.map((period) => (
-                                <li key={`${period.startDate}-${period.endDate}`}>
+                                <li key={`${period.startDate}-${period.endDate}`} className="break-all sm:break-normal">
                                   {period.startDate} - {period.endDate}
                                 </li>
                               ))}
@@ -264,14 +264,14 @@ export const HabitsPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
                     {habitView === "completed" && (
                       <button
                         type="button"
                         onClick={() => handleResume(habit.id)}
                         disabled={resumingHabitId === habit.id}
                         title="Resume Habit"
-                        className="habit-resume-icon rounded-lg p-1.5 text-emerald-500 hover:bg-emerald-500/10"
+                        className="habit-resume-icon rounded-lg p-1.5 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/10 active:scale-95"
                       >
                         {resumingHabitId === habit.id ? "Resuming..." : "Resume"}
                       </button>
